@@ -1,0 +1,46 @@
+message Alignment {
+  // method that produced the alignment
+  required string source = 1;
+  required string template = 2;
+
+  // query alignment string and starting position
+  required string query_aln = 3;
+  required uint32 query_pos = 4;
+
+  // template alignment string and starting position
+  required string templ_aln = 5;
+  required uint32 templ_pos = 6;
+
+  optional double confidence = 7;
+}
+
+message SilentFile {
+  required string filename = 1;
+  required string contents = 2;
+}
+
+message HarpRequest {
+  required string sequence  = 1;
+  required string recipient = 2;
+}
+
+message ModelingRequest {
+  required string sequence = 1;
+  required string recipient = 2;
+  repeated Alignment alignments = 3;
+}
+
+message SelectionRequest {
+  required string recipient = 1;
+  repeated SilentFile files = 2;
+  required int32 num_models = 3 [default = 5];
+}
+
+message HarpResponse {
+  message Selection {
+    required int32 rank = 1;
+    required string model = 2;
+  }
+
+  repeated Selection selected = 1;
+}
