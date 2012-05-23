@@ -9,14 +9,13 @@
 
 namespace hmmer {
 
-void write_contents(const char* filename, const char* msg) {
+void write_contents(const char* filename, const std::string& msg) {
   CHECK_NOTNULL(filename);
-  CHECK_NOTNULL(msg);
 
   std::ofstream out(filename);
   CHECK(out.good());
 
-  out << *msg;
+  out << msg;
   out.close();
 }
 

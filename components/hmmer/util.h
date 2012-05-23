@@ -10,7 +10,7 @@
 namespace hmmer {
 
 // Opens `filename` for writing and replaces its contents with `msg`.
-void write_contents(const char* filename, const char* msg);
+void write_contents(const char* filename, const std::string& msg);
 
 // Populates tokens with the result of splitting line by expr
 void tokenize(const std::string& line,

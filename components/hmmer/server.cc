@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "proto_util.h"
 #include "util.h"
+#include "zmq_util.h"
 
 #include <ctemplate/template.h>
 #include <gflags/gflags.h>
@@ -43,14 +44,16 @@ void process(const HarpRequest& req, ModelingRequest* rep, TemplateDictionary* t
   tmpl->SetValue("OUT", tmp_out);
 
   // Write the query sequence to file
-  hmmer::write_contents(tmp_in, req.sequence().c_str());
+  hmmer::write_contents(tmp_in, req.sequence());
 
   string cmd;
   ctemplate::ExpandTemplate(FLAGS_tpl, ctemplate::STRIP_WHITESPACE, tmpl, &cmd);
-  CHECK(std::system(cmd.c_str())) << "Executable returned non-zero code";
+  std::system(cmd.c_str());
 
   hmmer::Parser parser;
   parser.parse(tmp_out, rep);
+  rep->set_sequence(req.sequence());
+  rep->set_recipient(req.recipient());
 
   CHECK(std::remove(tmp_in)  == 0) << "Failed to remove temporary file " << tmp_in;
   CHECK(std::remove(tmp_out) == 0) << "Failed to remove temporary file " << tmp_out;
@@ -87,8 +90,13 @@ int main(int argc, char* argv[]) {
   tmpl.SetValue("DB", FLAGS_db);
 
   while (true) {
+    string uid = s_recv(fe);
+
     HarpRequest req;
     CHECK(proto_recv(&req, &fe));
+
+    std::cout << "Received:" << std::endl;
+    proto_show(req, &std::cout);
 
     ModelingRequest rep;
     process(req, &rep, &tmpl);

@@ -1,5 +1,5 @@
 CC = clang++
-CFLAGS = -I/opt/local/include -I../../ -I../../common -fPIC
+CFLAGS = -isystem /opt/local/include -I../../ -I../../common -fPIC
 LDFLAGS = -L/opt/local/lib -lboost_regex -lctemplate -lgflags -lglog -lprotobuf -lsnappy -lzmq -g0 -O3
 
 all: server
@@ -9,7 +9,7 @@ clean:
 
 # binaries
 server: parser.o util.o server.o
-	$(CC) $(LDFLAGS) $^ ../../*.so -o $@
+	$(CC) $(LDFLAGS) $^ harp.so -o $@
 
 # compile
 %.o : %.cc

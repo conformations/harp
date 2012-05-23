@@ -29,7 +29,8 @@ int main(int argc, char* argv[]) {
   }
 
   while (true) {
-    HarpResponse rep;
+    //HarpResponse rep;
+    ModelingRequest rep;
     CHECK(proto_recv(&rep, &pull));
     proto_show(rep, &cout);
   }
