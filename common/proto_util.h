@@ -3,8 +3,8 @@
 //
 // @author Christopher Miles (cmiles@uw.edu)
 
-#ifndef PROTO_UTIL_H_
-#define PROTO_UTIL_H_
+#ifndef HARP_COMMON_PROTO_UTIL_H_
+#define HARP_COMMON_PROTO_UTIL_H_
 
 #include "zmq_util.h"
 
@@ -46,4 +46,4 @@ void proto_show(const google::protobuf::Message& r, std::ostream* out) {
   (*out) << m << std::endl;
 }
 
-#endif  // PROTO_UTIL_H_
+#endif  // HARP_COMMON_PROTO_UTIL_H_
