@@ -1,0 +1,1 @@
+{{EXE}} --notextw -o {{OUT}} {{IN}} {{DB}}
