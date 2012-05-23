@@ -36,6 +36,7 @@ void Parser::parse(char const* filename, ModelingRequest* req) const {
     }
   }
 
+  int rank = 0;
   vector<string> block;
 
   // Partition the contents of `filename` into alignment blocks delimited by '>>'
@@ -47,9 +48,10 @@ void Parser::parse(char const* filename, ModelingRequest* req) const {
 
     if (boost::starts_with(line, ">>")) {
       if (block.size()) {
-	Alignment* alignment = req->add_alignments();
-	parse_block(block, alignment);
-	block.clear();
+        Alignment* alignment = req->add_alignments();
+        alignment->set_rank(++rank);
+        parse_block(block, alignment);
+        block.clear();
       }
     }
 
@@ -58,6 +60,7 @@ void Parser::parse(char const* filename, ModelingRequest* req) const {
 
   // Parse the final block
   Alignment* alignment = req->add_alignments();
+  alignment->set_rank(++rank);
   parse_block(block, alignment);
 
   // Close the file handle

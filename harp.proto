@@ -1,17 +1,18 @@
 message Alignment {
   // method that produced the alignment
   required string source = 1;
+  required uint32 rank = 2;
 
   // query alignment
-  required string query_align = 2;
-  required uint32 query_start = 3;
-  required uint32 query_stop  = 4;
+  required string query_align = 3;
+  required uint32 query_start = 4;
+  required uint32 query_stop  = 5;
 
   // template alignment
-  required string template_pdb = 5;
-  required string templ_align  = 6;
-  required uint32 templ_start  = 7;
-  required uint32 templ_stop   = 8;
+  required string template_pdb = 6;
+  required string templ_align  = 7;
+  required uint32 templ_start  = 8;
+  required uint32 templ_stop   = 9;
 }
 
 message SilentFile {
