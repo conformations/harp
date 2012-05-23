@@ -8,8 +8,8 @@
 #include <iostream>
 #include <sstream>
 
-DEFINE_string(in, "tcp://*:9000", "Response socket");
-DEFINE_string(out, "tcp://localhost:8000", "Request socket");
+DEFINE_string(in, "tcp://*:9000", "Incoming socket");
+DEFINE_string(out, "tcp://localhost:8000", "Outgoing socket");
 DEFINE_int32(messages, 100, "Number of messages to transmit");
 DEFINE_int32(io_threads, 1, "Number of threads dedicated to I/O operations");
 

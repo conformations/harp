@@ -8,8 +8,8 @@
 #include <iostream>
 #include <string>
 
-DEFINE_string(in, "tcp://localhost:8001", "Frontend socket");
-DEFINE_string(out, "tcp://localhost:8002", "Backend socket");
+DEFINE_string(in, "tcp://localhost:8001", "Incoming socket");
+DEFINE_string(out, "tcp://localhost:8002", "Outgoing socket");
 DEFINE_int32(io_threads, 1, "Number of threads dedicated to I/O operations");
 
 using namespace std;

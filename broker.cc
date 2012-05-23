@@ -5,8 +5,8 @@
 #include <exception>
 #include <iostream>
 
-DEFINE_string(in, "tcp://*:8000", "Frontend socket");
-DEFINE_string(out, "tcp://*:8001", "Backend socket");
+DEFINE_string(in, "tcp://*:8000", "Incoming socket");
+DEFINE_string(out, "tcp://*:8001", "Outgoing socket");
 DEFINE_int32(io_threads, 1, "Number of threads dedicated to I/O operations");
 
 int main (int argc, char *argv[]) {

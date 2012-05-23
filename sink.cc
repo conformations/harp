@@ -10,7 +10,7 @@
 #include <iostream>
 #include <string>
 
-DEFINE_string(in, "tcp://*:8002", "Response queue");
+DEFINE_string(in, "tcp://*:8002", "Incoming socket");
 DEFINE_int32(io_threads, 1, "Number of threads dedicated to I/O operations");
 
 using namespace std;
