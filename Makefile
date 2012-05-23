@@ -1,5 +1,5 @@
 CC = clang++
-CFLAGS = -I/opt/local/include -Icommon
+CFLAGS = -I/opt/local/include -Icommon -fPIC
 LDFLAGS = -L/opt/local/lib -lgflags -lglog -lprotobuf -lsnappy -lzmq -g0 -O3
 
 # See GNU Make, section "Chains of Implicit Rules"
@@ -9,15 +9,16 @@ LDFLAGS = -L/opt/local/lib -lgflags -lglog -lprotobuf -lsnappy -lzmq -g0 -O3
 all: broker client sink source splitter worker
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h broker client sink source splitter worker
+	rm -f *.o *.so *.pb.cc *.pb.h broker client sink source splitter worker
 
+# binaries
 broker: broker.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
-client: harp.pb.o client.o
+client: harp.so client.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
-sink: harp.pb.o sink.o
+sink: harp.so sink.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 source: source.o
@@ -28,6 +29,10 @@ splitter: splitter.o
 
 worker: worker.o
 	$(CC) $(LDFLAGS) $^ -o $@
+
+# libraries
+harp.so : harp.pb.o
+	$(CC) $(LDFLAGS) -fPIC -shared $^ -o $@
 
 # compile
 %.o : %.cc
