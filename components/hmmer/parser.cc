@@ -64,6 +64,21 @@ void Parser::parse(char const* filename, ModelingRequest* req) const {
   alignment->set_rank(++rank);
   parse_block(block, alignment);
 
+  // Remove alignments whose confidence is below some delta of the top-ranked
+  // alignment. Because protobuf does not provide the ability to remove specific
+  // elements from a repeated field, we use SwapElements() + RemoveLast().
+  if (req->alignments_size()) {
+    double threshold = req->alignments(0).confidence() * 0.9;
+    google::protobuf::RepeatedPtrField<Alignment>* alignments = req->mutable_alignments();
+
+    for (int i = alignments->size() - 1; i >= 0; --i) {
+      if (alignments->Get(i).confidence() < threshold) {
+        alignments->SwapElements(i, alignments->size() - 1);
+        alignments->RemoveLast();
+      }
+    }
+  }
+
   // Close the file handle
   file.close();
 }
