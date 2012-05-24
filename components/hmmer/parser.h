@@ -11,12 +11,15 @@
 namespace hmmer {
 
 class Parser {
+  enum LineType { QUERY, TEMPL };
+
   // Simple container for storing information for one entry of an alignment
   typedef struct {
-    std::string name;
+    std::string pdb;
+    std::string chain;
     std::string align;
-    int pos_start;
-    int pos_stop;
+    int start;
+    int stop;
   } Entry;
 
  public:
@@ -37,7 +40,7 @@ class Parser {
 
   // Parses a single alignment entry into its constituent pieces. Assumes that `line`
   // has had leading and trailing whitespace removed.
-  void parse_line(const std::string& line, Entry* entry) const;
+  void parse_line(const std::string& line, LineType type, Entry* entry) const;
 };
 
 }  // namespace hmmer

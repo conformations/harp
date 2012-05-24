@@ -9,13 +9,14 @@ message Alignment {
   required uint32 query_stop  = 5;
 
   // template alignment
-  required string template_pdb = 6;
-  required string templ_align  = 7;
-  required uint32 templ_start  = 8;
-  required uint32 templ_stop   = 9;
+  required string templ_pdb   = 6;
+  required string templ_chain = 7;
+  required string templ_align = 8;
+  required uint32 templ_start = 9;
+  required uint32 templ_stop  = 10;
 
   // confidence in the alignment
-  required double confidence = 10;
+  required double confidence = 11;
 }
 
 message SilentFile {

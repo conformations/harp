@@ -110,8 +110,8 @@ void Parser::parse_block(const vector<string>& block, Alignment* alignment) cons
   CHECK(ti != -1);
 
   Entry query, templ;
-  parse_line(block[qi], &query);
-  parse_line(block[ti], &templ);
+  parse_line(block[qi], QUERY, &query);
+  parse_line(block[ti], TEMPL, &templ);
 
   // Update alignment metadata
   alignment->set_source("hmmer");
@@ -119,31 +119,46 @@ void Parser::parse_block(const vector<string>& block, Alignment* alignment) cons
 
   // Update query alignment
   alignment->set_query_align(query.align);
-  alignment->set_query_start(query.pos_start);
-  alignment->set_query_stop(query.pos_stop);
+  alignment->set_query_start(query.start);
+  alignment->set_query_stop(query.stop);
 
   // Update template alignment
-  alignment->set_template_pdb(templ.name);
+  alignment->set_templ_pdb(templ.pdb);
+  alignment->set_templ_chain(templ.chain);
   alignment->set_templ_align(templ.align);
-  alignment->set_templ_start(templ.pos_start);
-  alignment->set_templ_stop(templ.pos_stop);
+  alignment->set_templ_start(templ.start);
+  alignment->set_templ_stop(templ.stop);
 }
 
-void Parser::parse_line(const string& line, Entry* entry) const {
+void Parser::parse_line(const string& line, LineType type, Entry* entry) const {
   CHECK_NOTNULL(entry);
 
   vector<string> tokens;
   tokenize(line, "\\s+", &tokens);
-  CHECK(tokens.size() == 4) << "Incorrect number of columns in line: " << line;
+  CHECK(tokens.size() == 4) << "Incorrect number of tokens: " << line;
 
-  entry->name  = tokens[0];
   entry->align = tokens[2];
-  entry->pos_start = boost::lexical_cast<int>(tokens[1]);
-  entry->pos_stop  = boost::lexical_cast<int>(tokens[3]);
+  entry->start = boost::lexical_cast<int>(tokens[1]);
+  entry->stop  = boost::lexical_cast<int>(tokens[3]);
 
   // Standardize the alignment format
   boost::replace_all(entry->align, ".", "-");
   boost::to_upper(entry->align);
+
+  // Retrieve PDB id and chain from template alignments
+  if (type == TEMPL) {
+    string identifier = tokens[0];
+    tokenize(identifier, "\\|", &tokens);
+    CHECK(tokens.size() == 5) << "Incorrect number of tokens: " << tokens[0];
+
+    int n = tokens.size();
+
+    entry->pdb = tokens[n - 2];
+    boost::to_lower(entry->pdb);
+
+    entry->chain = tokens[n - 1];
+    boost::to_upper(entry->chain);
+  }
 }
 
 }  // namespace hmmer
