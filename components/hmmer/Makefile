@@ -9,7 +9,7 @@ clean:
 
 # binaries
 server: parser.o util.o server.o
-	$(CC) $(LDFLAGS) $^ harp.so -o $@
+	$(CC) $(LDFLAGS) $^ ../../harp.so -o $@
 
 # compile
 %.o : %.cc
