@@ -13,6 +13,9 @@ message Alignment {
   required string templ_align  = 7;
   required uint32 templ_start  = 8;
   required uint32 templ_stop   = 9;
+
+  // confidence in the alignment
+  required double confidence = 10;
 }
 
 message SilentFile {

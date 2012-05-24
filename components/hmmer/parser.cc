@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 #include <glog/logging.h>
+#include <re2/re2.h>
 
 #include <fstream>
 #include <string>
@@ -74,6 +75,9 @@ void Parser::parse_block(const vector<string>& block, Alignment* alignment) cons
   size_t qi = -1;
   size_t ti = -1;
 
+  // Length-independent alignment confidence
+  double bits = -1;
+
   for (size_t i = 0; i < block.size(); ++i) {
     string line = block[i];
     boost::trim(line);
@@ -81,6 +85,8 @@ void Parser::parse_block(const vector<string>& block, Alignment* alignment) cons
     if (boost::starts_with(line, "== domain")) {
       qi = i + 1;
       ti = i + 3;
+
+      CHECK(RE2::PartialMatch(line, "(-?\\d+\\.\\d+) bits", &bits));
       break;
     }
   }
@@ -94,6 +100,7 @@ void Parser::parse_block(const vector<string>& block, Alignment* alignment) cons
 
   // Update alignment metadata
   alignment->set_source("hmmer");
+  alignment->set_confidence(bits);
 
   // Update query alignment
   alignment->set_query_align(query.align);
