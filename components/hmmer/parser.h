@@ -22,7 +22,12 @@ class Parser {
  public:
   // Partitions the contents of `filename` into a series of alignment blocks,
   // which are subsequently parsed by `parse_block`. Populates the alignment
-  // fields of `req` with the result.
+  // fields of `req` with the result. Alignments are filtered as follows:
+  //
+  // Let t = confidence of top-ranked alignment * X
+  // for alignment in alignments
+  //   if confidence(alignment) < t
+  //     remove alignment
   void parse(const char* filename, ModelingRequest* req) const;
 
  protected:
