@@ -18,6 +18,7 @@
 DEFINE_string(out, "tcp://localhost:8000", "Address of the component with whom to communicate");
 DEFINE_string(fasta, "", "File containing the query sequence in FASTA format");
 DEFINE_string(email, "", "Email address of recipient");
+DEFINE_string(id, "", "Identifier for this job");
 
 using namespace std;
 
@@ -57,6 +58,7 @@ int main(int argc, char* argv[]) {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   // Validate arguments
+  CHECK(!FLAGS_id.empty()) << "Failed to provide required argument --id";
   CHECK(!FLAGS_email.empty()) << "Failed to provide required argument --email";
   CHECK(!FLAGS_fasta.empty()) << "Failed to provide required argument --fasta";
 
@@ -78,6 +80,7 @@ int main(int argc, char* argv[]) {
 
     HarpRequest req;
     req.set_sequence(fasta);
+    req.set_identifier(FLAGS_id);
     req.set_recipient(FLAGS_email);
 
     CHECK(proto_send(req, &comp));

@@ -149,9 +149,9 @@ void Parser::parse_line(const string& line, LineType type, Entry* entry) const {
   if (type == TEMPL) {
     string identifier = tokens[0];
     tokenize(identifier, "\\|", &tokens);
-    CHECK(tokens.size() == 5) << "Incorrect number of tokens: " << tokens[0];
 
     int n = tokens.size();
+    CHECK(n == 5) << "Incorrect number of tokens: " << line;
 
     entry->pdb = tokens[n - 2];
     boost::to_lower(entry->pdb);
