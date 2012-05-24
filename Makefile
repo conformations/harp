@@ -15,10 +15,10 @@ clean:
 broker: broker.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
-client: harp.so client.o
+client: libharp.so client.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
-sink: harp.so sink.o
+sink: libharp.so sink.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 source: source.o
@@ -31,7 +31,10 @@ worker: worker.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # libraries
-harp.so : harp.pb.o
+libharp.a : harp.pb.o
+	$(CC) $(LDFLAGS) -fPIC -static $^ -o $@
+
+libharp.so : harp.pb.o
 	$(CC) $(LDFLAGS) -fPIC -shared $^ -o $@
 
 # compile
