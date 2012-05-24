@@ -1,4 +1,4 @@
-#include "util.h"
+#include "str_util.h"
 
 #include <boost/algorithm/string/regex.hpp>
 #include <glog/logging.h>
@@ -6,8 +6,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-
-namespace hmmer {
 
 void write_contents(const char* filename, const std::string& msg) {
   CHECK_NOTNULL(filename);
@@ -28,4 +26,3 @@ void tokenize(const std::string& line,
   boost::algorithm::split_regex(*tokens, line, pattern);
 }
 
-}  // namespace hmmer

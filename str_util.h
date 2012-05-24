@@ -1,13 +1,11 @@
 // A collection of utility functions used by hmmer.
 // @author Christopher Miles (cmiles@uw.edu)
 
-#ifndef HARP_COMPONENTS_HMMER_UTIL_H_
-#define HARP_COMPONENTS_HMMER_UTIL_H_
+#ifndef HARP_STR_UTIL_H_
+#define HARP_STR_UTIL_H_
 
 #include <string>
 #include <vector>
-
-namespace hmmer {
 
 // Opens `filename` for writing and replaces its contents with `msg`.
 void write_contents(const char* filename, const std::string& msg);
@@ -17,6 +15,4 @@ void tokenize(const std::string& line,
               const std::string& regex,
               std::vector<std::string>* tokens);
 
-}  // namespace hmmer
-
-#endif  // HARP_COMPONENTS_HMMER_UTIL_H_
+#endif  // HARP_STR_UTIL_H_

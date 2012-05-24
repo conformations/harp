@@ -8,7 +8,7 @@ clean:
 	rm -f *.o *.so server
 
 # binaries
-server: parser.o util.o server.o
+server: parser.o server.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # compile

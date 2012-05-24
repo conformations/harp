@@ -1,7 +1,7 @@
 #include "harp.pb.h"
 #include "parser.h"
 #include "proto_util.h"
-#include "util.h"
+#include "str_util.h"
 #include "zmq_util.h"
 
 #include <ctemplate/template.h>
@@ -44,7 +44,7 @@ void process(const HarpRequest& req, ModelingRequest* rep, TemplateDictionary* t
   tmpl->SetValue("OUT", tmp_out);
 
   // Write the query sequence to file
-  hmmer::write_contents(tmp_in, req.sequence());
+  write_contents(tmp_in, req.sequence());
 
   string cmd;
   ctemplate::ExpandTemplate(FLAGS_tpl, ctemplate::STRIP_WHITESPACE, tmpl, &cmd);

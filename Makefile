@@ -1,6 +1,6 @@
 CC = clang++
-CFLAGS = -I/opt/local/include -Icommon -fPIC
-LDFLAGS = -L/opt/local/lib -lgflags -lglog -lprotobuf -lsnappy -lzmq -g0 -O3
+CFLAGS = -isystem /opt/local/include -Icommon -fPIC
+LDFLAGS = -L/opt/local/lib -lboost_regex -lgflags -lglog -lprotobuf -lsnappy -lzmq -g0 -O3
 
 # See GNU Make, section "Chains of Implicit Rules"
 # ftp://ftp.gnu.org/pub/pub/old-gnu/Manuals/make-3.79.1/html_chapter/make_10.html#SEC97
@@ -31,10 +31,10 @@ worker: worker.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # libraries
-libharp.a : harp.pb.o
+libharp.a : harp.pb.o str_util.o
 	$(CC) $(LDFLAGS) -fPIC -static $^ -o $@
 
-libharp.so : harp.pb.o
+libharp.so : harp.pb.o str_util.o
 	$(CC) $(LDFLAGS) -fPIC -shared $^ -o $@
 
 # compile
@@ -44,3 +44,4 @@ libharp.so : harp.pb.o
 # genproto
 %.pb.cc %.pb.h : %.proto
 	protoc --cpp_out=. $<
+

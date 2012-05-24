@@ -1,6 +1,6 @@
 #include "parser.h"
 #include "harp.pb.h"
-#include "util.h"
+#include "str_util.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
