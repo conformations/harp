@@ -90,13 +90,11 @@ int main(int argc, char* argv[]) {
   tmpl.SetValue("DB", FLAGS_db);
 
   while (true) {
+    // sender's uid
     string uid = s_recv(fe);
 
     HarpRequest req;
     CHECK(proto_recv(&req, &fe));
-
-    std::cout << "Received:" << std::endl;
-    proto_show(req, &std::cout);
 
     ModelingRequest rep;
     process(req, &rep, &tmpl);
