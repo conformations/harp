@@ -5,7 +5,7 @@ LDFLAGS = -L/opt/local/lib -L../../ -lboost_regex -lctemplate -lgflags -lglog -l
 all: server
 
 clean:
-	rm -f *.o *.so server
+	rm -f *.o *.so *.pyc server
 
 # binaries
 server: parser.o server.o

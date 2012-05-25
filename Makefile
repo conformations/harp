@@ -9,7 +9,7 @@ LDFLAGS = -L/opt/local/lib -lboost_regex -lgflags -lglog -lprotobuf -lzmq -g0 -O
 all: broker client sink source splitter worker
 
 clean:
-	rm -f *.o *.so *.pb.cc *.pb.h broker client sink source splitter worker
+	rm -f *.o *.so *.pb.cc *.pb.h *_pb2.py broker client sink source splitter worker
 
 # binaries
 broker: broker.o
@@ -43,5 +43,5 @@ libharp.so : harp.pb.o str_util.o
 
 # genproto
 %.pb.cc %.pb.h : %.proto
-	protoc --cpp_out=. $<
+	protoc --cpp_out=. --python_out=. $<
 
