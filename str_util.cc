@@ -17,6 +17,22 @@ void write_contents(const char* filename, const std::string& msg) {
   out.close();
 }
 
+void read_contents(const char* filename, std::string* msg) {
+  CHECK_NOTNULL(filename);
+  CHECK_NOTNULL(msg);
+
+  std::ifstream file(filename);
+  CHECK(file.good());
+
+  std::string line;
+  while (file.good()) {
+    getline(file, line);
+    *msg += line;
+  }
+
+  file.close();
+}
+
 void tokenize(const std::string& line,
               const std::string& expr,
               std::vector<std::string>* tokens) {
