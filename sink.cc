@@ -10,7 +10,7 @@
 #include <iostream>
 #include <string>
 
-DEFINE_string(in, "tcp://*:8002", "Incoming socket");
+DEFINE_string(in, "tcp://localhost:8002", "Incoming socket");
 DEFINE_int32(io_threads, 1, "Number of threads dedicated to I/O operations");
 
 using namespace std;
@@ -23,12 +23,14 @@ int main(int argc, char* argv[]) {
   zmq::socket_t pull(context, ZMQ_PULL);
 
   try {
-    pull.bind(FLAGS_in.c_str());
+    pull.connect(FLAGS_in.c_str());
   } catch (std::exception& e) {
-    LOG(FATAL) << "Failed to bind inbound socket: " << FLAGS_in << std::endl;
+    LOG(FATAL) << "Failed to connect inbound socket: " << FLAGS_in << std::endl;
   }
 
   while (true) {
+    string sender_uid = s_recv(pull);
+
     HarpResponse rep;
     CHECK(proto_recv(&rep, &pull));
     proto_show(rep, &cout);
