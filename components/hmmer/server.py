@@ -144,7 +144,7 @@ def parse(output, rep):
 
 
 def process(options, req, rep):
-    '''Processing a single request to the server, storing the result in `rep`'''
+    '''Processes a single request to the server, storing the result in `rep`'''
     # Create temporary files to store the input/output from hmmer.
     # Caller is responsible for deleting them.
     (handle, tmp_in) = tempfile.mkstemp()
@@ -167,9 +167,6 @@ def process(options, req, rep):
         os.remove(tmp_out)
     except:
         sys.stderr.write('Failed to remove one or more temporary files: %s, %s' % (tmp_in, tmp_out))
-
-    # Return text-format protocol buffer
-    return str(rep)
 
 
 if __name__ == '__main__':
