@@ -54,6 +54,7 @@ void process(const HarpRequest& req, ModelingRequest* rep, TemplateDictionary* t
   parser.parse(tmp_out, rep);
   rep->set_sequence(req.sequence());
   rep->set_recipient(req.recipient());
+  rep->set_identifier(req.identifier());
 
   CHECK(std::remove(tmp_in)  == 0) << "Failed to remove temporary file " << tmp_in;
   CHECK(std::remove(tmp_out) == 0) << "Failed to remove temporary file " << tmp_out;
