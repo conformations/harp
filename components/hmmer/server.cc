@@ -11,7 +11,6 @@
 
 #include <cstdio>
 #include <exception>
-#include <iostream>
 #include <string>
 
 DEFINE_string(incoming, "tcp://localhost:8001", "Incoming socket");
@@ -74,13 +73,13 @@ int main(int argc, char* argv[]) {
   try {
     fe.connect(FLAGS_incoming.c_str());
   } catch (std::exception& e) {
-    LOG(FATAL) << "Failed to connect incoming socket: " << FLAGS_incoming << std::endl;
+    LOG(FATAL) << "Failed to connect incoming socket: " << FLAGS_incoming;
   }
 
   try {
     be.connect(FLAGS_outgoing.c_str());
   } catch (std::exception& e) {
-    LOG(FATAL) << "Failed to connect outgoing socket: " << FLAGS_outgoing << std::endl;
+    LOG(FATAL) << "Failed to connect outgoing socket: " << FLAGS_outgoing;
   }
 
   // Populate the template dictionary with as much information as we have
