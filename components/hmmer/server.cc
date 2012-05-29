@@ -14,9 +14,8 @@
 #include <iostream>
 #include <string>
 
-DEFINE_string(in, "tcp://localhost:8001", "Incoming socket");
-DEFINE_string(out, "tcp://localhost:8002", "Outgoing socket");
-DEFINE_int32(io_threads, 1, "Number of threads dedicated to I/O operations");
+DEFINE_string(incoming, "tcp://localhost:8001", "Incoming socket");
+DEFINE_string(outgoing, "tcp://localhost:8002", "Outgoing socket");
 
 // Absolute paths to hmmer executable and sequence database
 DEFINE_string(exe, "/usr/local/bin/phmmer", "hmmer executable");
@@ -68,20 +67,20 @@ int main(int argc, char* argv[]) {
   // against is compatible with the version of the headers we compiled against
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  zmq::context_t context(FLAGS_io_threads);
+  zmq::context_t context(1);
   zmq::socket_t fe(context, ZMQ_PULL);
   zmq::socket_t be(context, ZMQ_PUSH);
 
   try {
-    fe.connect(FLAGS_in.c_str());
+    fe.connect(FLAGS_incoming.c_str());
   } catch (std::exception& e) {
-    LOG(FATAL) << "Failed to connect incoming socket: " << FLAGS_in << std::endl;
+    LOG(FATAL) << "Failed to connect incoming socket: " << FLAGS_incoming << std::endl;
   }
 
   try {
-    be.connect(FLAGS_out.c_str());
+    be.connect(FLAGS_outgoing.c_str());
   } catch (std::exception& e) {
-    LOG(FATAL) << "Failed to connect outgoing socket: " << FLAGS_out << std::endl;
+    LOG(FATAL) << "Failed to connect outgoing socket: " << FLAGS_outgoing << std::endl;
   }
 
   // Populate the template dictionary with as much information as we have
@@ -91,8 +90,7 @@ int main(int argc, char* argv[]) {
   tmpl.SetValue("DB", FLAGS_db);
 
   while (true) {
-    // sender's uid
-    string uid = s_recv(fe);
+    s_recv(fe);  // sender's uid
 
     HarpRequest req;
     CHECK(proto_recv(&req, &fe));
@@ -100,9 +98,5 @@ int main(int argc, char* argv[]) {
     ModelingRequest rep;
     process(req, &rep, &tmpl);
     CHECK(proto_send(rep, &be));
-
-    LOG(INFO) << "Identified " << rep.alignments_size() << " alignments "
-              << "for sequence " << req.sequence()
-              << std::endl;
   }
 }
