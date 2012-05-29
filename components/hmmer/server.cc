@@ -32,8 +32,8 @@ void process(const HarpRequest& req, ModelingRequest* rep, TemplateDictionary* t
   CHECK_NOTNULL(rep);
   CHECK_NOTNULL(tmpl);
 
-  // Create temporary files to store the input (tmp_in) to and output (tmp_out) from hmmer.
-  // Populate the remaining values in the template dictionary.
+  // Create temporary files to store the input/output to hmmer. Use these to
+  // populate the remaining values in the template dictionary.
   char tmp_in [L_tmpnam];
   char tmp_out[L_tmpnam];
   tmpnam(tmp_in);
