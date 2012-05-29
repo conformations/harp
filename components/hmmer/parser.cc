@@ -11,7 +11,6 @@
 #include <re2/re2.h>
 
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
