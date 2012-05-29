@@ -17,6 +17,9 @@ message Alignment {
 
   // confidence in the alignment
   required double confidence = 11;
+
+  // percentage of query sequence covered
+  required double coverage = 12;
 }
 
 message ModelingRequest {

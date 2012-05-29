@@ -7,12 +7,16 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <re2/re2.h>
 
 #include <fstream>
 #include <string>
 #include <vector>
+
+DEFINE_double(conf_delta, 0.1, "Candidate alignments must be within x% of top-ranked alignment");
+DEFINE_double(cov_min, 0.9, "Candidate alignments must cover at least x% of the query sequence");
 
 namespace hmmer {
 
@@ -64,15 +68,21 @@ void Parser::parse(char const* filename, ModelingRequest* req) const {
   alignment->set_rank(++rank);
   parse_block(req->sequence(), block, alignment);
 
-  // Remove alignments whose confidence is below some delta of the top-ranked
-  // alignment. Because protobuf does not provide the ability to remove specific
-  // elements from a repeated field, we use SwapElements() + RemoveLast().
+  // Remove alignments that cover less than x% of the query sequence and those
+  // whose confidence is less than y% of the top-ranked hit
   if (req->alignments_size()) {
-    double threshold = req->alignments(0).confidence() * 0.9;
+    const double conf_threshold = (1 - FLAGS_conf_delta) * req->alignments(0).confidence();
+    const double cov_threshold = FLAGS_cov_min;
+
     google::protobuf::RepeatedPtrField<Alignment>* alignments = req->mutable_alignments();
 
     for (int i = alignments->size() - 1; i >= 0; --i) {
-      if (alignments->Get(i).confidence() < threshold) {
+      const Alignment& align = alignments->Get(i);
+
+      // Because protobuf does not provide the ability to remove arbitrary
+      // elements from a RepeatedField, we use a combination of SwapElements()
+      // and RemoveLast()
+      if (align.confidence() < conf_threshold || align.coverage() < cov_threshold) {
         alignments->SwapElements(i, alignments->size() - 1);
         alignments->RemoveLast();
       }
@@ -113,6 +123,13 @@ void Parser::parse_block(const string& sequence, const vector<string>& block, Al
   parse_line(block[qi], QUERY, &query);
   parse_line(block[ti], TEMPL, &templ);
 
+  double coverage = static_cast<double>(query.stop - query.start + 1) / sequence.length();
+
+  // Update alignment metadata
+  alignment->set_source("hmmer");
+  alignment->set_confidence(bits);
+  alignment->set_coverage(coverage);
+
   // Extend the query alignment so that it contains the complete sequence,
   // padding the template alignment as necessary
   string leading  = sequence.substr(0, query.start - 1);
@@ -124,10 +141,6 @@ void Parser::parse_block(const string& sequence, const vector<string>& block, Al
   string leading_gaps(leading.length(), '-');
   string trailing_gaps(trailing.length(), '-');
   templ.align = leading_gaps + templ.align + trailing_gaps;
-
-  // Update alignment metadata
-  alignment->set_source("hmmer");
-  alignment->set_confidence(bits);
 
   // Update query alignment
   alignment->set_query_align(query.align);
