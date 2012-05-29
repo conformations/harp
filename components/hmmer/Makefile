@@ -1,4 +1,4 @@
-CC = clang++
+CC = g++
 CFLAGS = -I/usr/local/include -I../../ -I../../common -fPIC
 LDFLAGS = -L/usr/local/lib -L../../ -lboost_regex -lctemplate -lgflags -lglog -lharp -lprotobuf -lre2 -lzmq -g0 -O3
 
