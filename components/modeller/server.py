@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 import harp_pb2
+import gflags
 from proto_util import *
 
 import modeller
 import zmq
 
-import argparse
 import os
 import os.path
 import shutil
@@ -13,6 +13,10 @@ import string
 import subprocess
 import sys
 import tempfile
+
+FLAGS = gflags.FLAGS
+gflags.DEFINE_string('incoming', 'tcp://localhost:8001', 'Incoming socket')
+gflags.DEFINE_string('outgoing', 'tcp://localhost:8002', 'Outgoing socket')
 
 def process(req, rep):
     '''Processes a single request to the server, storing the result in `rep`'''
@@ -67,25 +71,26 @@ def process(req, rep):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--in',  default = 'tcp://localhost:8001', help = 'Incoming socket')
-    parser.add_argument('--out', default = 'tcp://localhost:8002', help = 'Outgoing socket')
-    options = vars(parser.parse_args())
+    try:
+        sys.argv = FLAGS(sys.argv)
+    except gflags.FlagsError, e:
+        print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
+        sys.exit(1)
 
     context = zmq.Context()
     fe = context.socket(zmq.PULL)
     be = context.socket(zmq.PUSH)
 
     try:
-        fe.connect(options['in'])
+        fe.connect(FLAGS.incoming)
     except:
-        sys.stderr.write('Failed to connect incoming socket: %s\n' % options['in'])
+        sys.stderr.write('Failed to connect incoming socket: %s\n' % FLAGS.incoming)
         sys.exit(1)
 
     try:
-        be.connect(options['out'])
+        be.connect(FLAGS.outgoing)
     except:
-        sys.stderr.write('Failed to connect outgoing socket: %s\n' % options['out'])
+        sys.stderr.write('Failed to connect outgoing socket: %s\n' % FLAGS.outgoing)
         sys.exit(1)
 
     while True:
