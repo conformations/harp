@@ -11,7 +11,6 @@
 
 #include <exception>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -67,7 +66,7 @@ int main(int argc, char* argv[]) {
   try {
     comp.connect(FLAGS_outgoing.c_str());
   } catch (exception& e) {
-    LOG(FATAL) << "Failed to connect outbound socket: " << FLAGS_outgoing << endl;
+    LOG(FATAL) << "Failed to connect outbound socket: " << FLAGS_outgoing;
   }
 
   vector<string> sequences;
