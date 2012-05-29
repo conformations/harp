@@ -84,6 +84,5 @@ int main(int argc, char* argv[]) {
     req.set_recipient(FLAGS_email);
 
     CHECK(proto_send(req, &comp));
-    LOG(INFO) << "Submitted: " << fasta << endl;
   }
 }
