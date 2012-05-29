@@ -6,10 +6,10 @@ LDFLAGS = -L/usr/local/lib -lboost_regex -lgflags -lglog -lprotobuf -lzmq -g0 -O
 # ftp://ftp.gnu.org/pub/pub/old-gnu/Manuals/make-3.79.1/html_chapter/make_10.html#SEC97
 .SECONDARY: harp.pb.cc
 
-all: broker client sink source splitter worker
+all: broker client sink splitter
 
 clean:
-	rm -f *.o *.so *.pb.cc *.pb.h *_pb2.py broker client sink source splitter worker
+	rm -f *.o *.so *.pb.cc *.pb.h *_pb2.py broker client sink splitter
 
 # binaries
 broker: broker.o
@@ -21,13 +21,7 @@ client: libharp.so client.o
 sink: libharp.so sink.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
-source: source.o
-	$(CC) $(LDFLAGS) $^ -o $@
-
 splitter: splitter.o
-	$(CC) $(LDFLAGS) $^ -o $@
-
-worker: worker.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # libraries
