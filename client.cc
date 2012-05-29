@@ -38,10 +38,9 @@ void read_sequences(const string& filename, vector<string>* sequences) {
         sequences->push_back(buffer);
         buffer.clear();
       }
+    } else {
+      buffer += line;
     }
-
-    buffer += line;
-    buffer += "\n";
   }
 
   // Write the final block
@@ -73,16 +72,12 @@ int main(int argc, char* argv[]) {
 
   vector<string> sequences;
   read_sequences(FLAGS_fasta, &sequences);
-  LOG(INFO) << "Read " << sequences.size() << " sequences from file" << endl;
 
   for (vector<string>::const_iterator i = sequences.begin(); i != sequences.end(); ++i) {
-    const string& fasta = *i;
-
     HarpRequest req;
-    req.set_sequence(fasta);
+    req.set_sequence(*i);
     req.set_identifier(FLAGS_id);
     req.set_recipient(FLAGS_email);
-
     CHECK(proto_send(req, &comp));
   }
 }
