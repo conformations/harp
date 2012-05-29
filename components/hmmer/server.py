@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 import harp_pb2
+import gflags
 from proto_util import *
 import zmq
 
-import argparse
 import os
 import os.path
 import re
@@ -11,6 +11,12 @@ import string
 import subprocess
 import sys
 import tempfile
+
+FLAGS = gflags.FLAGS
+gflags.DEFINE_string('incoming', 'tcp://localhost:8001', 'Incoming socket')
+gflags.DEFINE_string('outgoing', 'tcp://localhost:8002', 'Outgoing socket')
+gflags.DEFINE_string('exe', '/usr/local/bin/phmmer', 'Absolute path to hmmer executable')
+gflags.DEFINE_string('db', '/home/hmmer/databases/pdbaa', 'Absolute path to hmmer database')
 
 hmmer_cmd = string.Template('$exe --notextw -o $out $fasta $db')
 
@@ -97,7 +103,6 @@ def parse(output, rep):
     for a in alignments:
       if confidence(a) < t:
         remove a
-
     '''
     with open(output) as file:
         # Fast-forward the stream to the first line matching the given prefix
@@ -143,7 +148,7 @@ def parse(output, rep):
                 del rep.alignments[i]
 
 
-def process(options, req, rep):
+def process(req, rep):
     '''Processes a single request to the server, storing the result in `rep`'''
     # Create temporary files to store the input/output from hmmer.
     # Caller is responsible for deleting them.
@@ -154,8 +159,8 @@ def process(options, req, rep):
     with open(tmp_in, 'w') as file:
         file.write('%s\n' % req.sequence)
 
-    params = { 'exe' : options['exe'], 'db' : options['db'], 'fasta' : tmp_in, 'out' : tmp_out }
-    output = subprocess.check_output(hmmer_cmd.safe_substitute(params).split())
+    params = { 'exe' : FLAGS.exe, 'db' : FLAGS.db, 'fasta' : tmp_in, 'out' : tmp_out }
+    subprocess.check_call(hmmer_cmd.safe_substitute(params).split())
 
     parse(tmp_out, rep)
     rep.sequence = req.sequence
@@ -170,31 +175,30 @@ def process(options, req, rep):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--in',  default = 'tcp://localhost:8001', help = 'Incoming socket')
-    parser.add_argument('--out', default = 'tcp://localhost:8002', help = 'Outgoing socket')
-    parser.add_argument('--exe', default = '/usr/local/bin/phmmer', help = 'Absolute path to hmmer executable')
-    parser.add_argument('--db', default = '/home/hmmer/databases/pdbaa', help = 'Absolute path to hmmer database')
-    options = vars(parser.parse_args())
+    try:
+        sys.argv = FLAGS(sys.argv)
+    except gflags.FlagsError, e:
+        print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
+        sys.exit(1)
 
     # validate inputs
-    assert os.path.exists(options['exe'])
-    assert os.path.exists(options['db'])
+    assert os.path.exists(FLAGS.exe)
+    assert os.path.exists(FLAGS.db)
 
     context = zmq.Context()
     fe = context.socket(zmq.PULL)
     be = context.socket(zmq.PUSH)
 
     try:
-        fe.connect(options['in'])
+        fe.connect(FLAGS.incoming)
     except:
-        sys.stderr.write('Failed to connect incoming socket: %s\n' % options['in'])
+        sys.stderr.write('Failed to connect incoming socket: %s\n' % FLAGS.incoming)
         sys.exit(1)
 
     try:
-        be.connect(options['out'])
+        be.connect(FLAGS.outgoing)
     except:
-        sys.stderr.write('Failed to connect outgoing socket: %s\n' % options['out'])
+        sys.stderr.write('Failed to connect outgoing socket: %s\n' % FLAGS.outgoing)
         sys.exit(1)
 
     while True:
@@ -203,5 +207,5 @@ if __name__ == '__main__':
         rep = harp_pb2.ModelingRequest()
 
         proto_recv(fe, req)
-        process(options, req, rep)
+        process(req, rep)
         proto_send(be, rep)
