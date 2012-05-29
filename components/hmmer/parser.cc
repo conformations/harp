@@ -173,16 +173,10 @@ void Parser::parse_line(const string& line, LineType type, Entry* entry) const {
 
   // Retrieve PDB id and chain from template alignments
   if (type == TEMPL) {
-    string identifier = tokens[0];
-    tokenize(identifier, "\\|", &tokens);
+    entry->pdb = tokens[0].substr(0, 4);
+    entry->chain = tokens[0].substr(4, 1);
 
-    int n = tokens.size();
-    CHECK(n == 5) << "Incorrect number of tokens: " << line;
-
-    entry->pdb = tokens[n - 2];
     boost::to_lower(entry->pdb);
-
-    entry->chain = tokens[n - 1];
     boost::to_upper(entry->chain);
   }
 }
