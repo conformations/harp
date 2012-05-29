@@ -8,31 +8,27 @@
 
 #include <exception>
 #include <iostream>
-#include <string>
 
-DEFINE_string(in, "tcp://localhost:8002", "Incoming socket");
-DEFINE_int32(io_threads, 1, "Number of threads dedicated to I/O operations");
-
-using namespace std;
+DEFINE_string(incoming, "tcp://localhost:8002", "Incoming socket");
 
 int main(int argc, char* argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  zmq::context_t context(FLAGS_io_threads);
+  zmq::context_t context(1);
   zmq::socket_t pull(context, ZMQ_PULL);
 
   try {
-    pull.connect(FLAGS_in.c_str());
+    pull.connect(FLAGS_incoming.c_str());
   } catch (std::exception& e) {
-    LOG(FATAL) << "Failed to connect inbound socket: " << FLAGS_in << std::endl;
+    LOG(FATAL) << "Failed to connect inbound socket: " << FLAGS_incoming << std::endl;
   }
 
   while (true) {
-    string sender_uid = s_recv(pull);
+    s_recv(pull);  // sender uid
 
     HarpResponse rep;
     CHECK(proto_recv(&rep, &pull));
-    proto_show(rep, &cout);
+    proto_show(rep, &std::cout);
   }
 }

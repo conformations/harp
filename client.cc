@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-DEFINE_string(out, "tcp://localhost:8000", "Address of the component with whom to communicate");
+DEFINE_string(outgoing, "tcp://localhost:8000", "Outgoing socket");
 DEFINE_string(fasta, "", "File containing the query sequence in FASTA format");
 DEFINE_string(email, "", "Email address of recipient");
 DEFINE_string(id, "", "Identifier for this job");
@@ -66,9 +66,9 @@ int main(int argc, char* argv[]) {
   zmq::socket_t comp(context, ZMQ_PUSH);
 
   try {
-    comp.connect(FLAGS_out.c_str());
+    comp.connect(FLAGS_outgoing.c_str());
   } catch (exception& e) {
-    LOG(FATAL) << "Failed to connect outbound socket: " << FLAGS_out << endl;
+    LOG(FATAL) << "Failed to connect outbound socket: " << FLAGS_outgoing << endl;
   }
 
   vector<string> sequences;
