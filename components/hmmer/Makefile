@@ -1,6 +1,6 @@
 CC = clang++
-CFLAGS = -isystem /opt/local/include -I../../ -I../../common -fPIC
-LDFLAGS = -L/opt/local/lib -L../../ -lboost_regex -lctemplate -lgflags -lglog -lharp -lprotobuf -lre2 -lzmq -g0 -O3
+CFLAGS = -I/usr/local/include -I../../ -I../../common -fPIC
+LDFLAGS = -L/usr/local/lib -L../../ -lboost_regex -lctemplate -lgflags -lglog -lharp -lprotobuf -lre2 -lzmq -g0 -O3
 
 all: server
 
