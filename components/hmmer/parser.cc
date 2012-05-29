@@ -11,6 +11,7 @@
 #include <re2/re2.h>
 
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -51,7 +52,7 @@ void Parser::parse(char const* filename, ModelingRequest* req) const {
       if (block.size()) {
         Alignment* alignment = req->add_alignments();
         alignment->set_rank(++rank);
-        parse_block(block, alignment);
+        parse_block(req->sequence(), block, alignment);
         block.clear();
       }
     }
@@ -62,7 +63,7 @@ void Parser::parse(char const* filename, ModelingRequest* req) const {
   // Parse the final block
   Alignment* alignment = req->add_alignments();
   alignment->set_rank(++rank);
-  parse_block(block, alignment);
+  parse_block(req->sequence(), block, alignment);
 
   // Remove alignments whose confidence is below some delta of the top-ranked
   // alignment. Because protobuf does not provide the ability to remove specific
@@ -83,7 +84,7 @@ void Parser::parse(char const* filename, ModelingRequest* req) const {
   file.close();
 }
 
-void Parser::parse_block(const vector<string>& block, Alignment* alignment) const {
+void Parser::parse_block(const string& sequence, const vector<string>& block, Alignment* alignment) const {
   CHECK_NOTNULL(alignment);
 
   // Indices of query and template sequences in `block`
@@ -112,6 +113,18 @@ void Parser::parse_block(const vector<string>& block, Alignment* alignment) cons
   Entry query, templ;
   parse_line(block[qi], QUERY, &query);
   parse_line(block[ti], TEMPL, &templ);
+
+  // Extend the query alignment so that it contains the complete sequence,
+  // padding the template alignment as necessary
+  string leading  = sequence.substr(0, query.start - 1);
+  string trailing = sequence.substr(query.stop);
+  query.start = 1;
+  query.stop  = sequence.length();
+  query.align = leading + query.align + trailing;
+
+  string leading_gaps(leading.length(), '-');
+  string trailing_gaps(trailing.length(), '-');
+  templ.align = leading_gaps + templ.align + trailing_gaps;
 
   // Update alignment metadata
   alignment->set_source("hmmer");
@@ -144,6 +157,7 @@ void Parser::parse_line(const string& line, LineType type, Entry* entry) const {
   // Standardize the alignment format
   boost::replace_all(entry->align, ".", "-");
   boost::to_upper(entry->align);
+  boost::trim(entry->align);
 
   // Retrieve PDB id and chain from template alignments
   if (type == TEMPL) {
