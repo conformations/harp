@@ -43,17 +43,17 @@ void process(const HarpRequest& req, ModelingRequest* rep, TemplateDictionary* t
   tmpl->SetValue("OUT", tmp_out);
 
   // Write the query sequence to file
-  write_contents(tmp_in, req.sequence());
+  write_contents(tmp_in, "> x\n" + req.sequence());
 
   string cmd;
   ctemplate::ExpandTemplate(FLAGS_tpl, ctemplate::STRIP_WHITESPACE, tmpl, &cmd);
   std::system(cmd.c_str());
 
   hmmer::Parser parser;
-  parser.parse(tmp_out, rep);
   rep->set_sequence(req.sequence());
   rep->set_recipient(req.recipient());
   rep->set_identifier(req.identifier());
+  parser.parse(tmp_out, rep);
 
   CHECK(std::remove(tmp_in)  == 0) << "Failed to remove temporary file " << tmp_in;
   CHECK(std::remove(tmp_out) == 0) << "Failed to remove temporary file " << tmp_out;
