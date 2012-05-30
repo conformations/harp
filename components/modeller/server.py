@@ -5,6 +5,7 @@ import modeller
 from proto_util import *
 import zmq
 
+import hashlib
 import os
 import os.path
 import shutil
@@ -50,23 +51,22 @@ def process(req, rep):
 
     query = 'query'
 
-    # Ensure that input alignments are full length. Simultaneously, generate
-    # unique identifiers for each alignment in the unlikely event that they
-    # share the same template pdb's, chains, etc.
-    templates = []
+    # Ensure that input alignments are full length
     for a in req.alignments:
         assert a.query_start == 1
         assert a.query_stop == len(req.sequence)
-        templ_id = [str(a.templ_pdb), str(a.templ_chain)]
-        templates.append(templ_id)
 
     # Copy compressed template structures from local mirror of the wwpdb
-    # into the working directory. Build up a list of template identifiers
-    # for use in modeller.
+    # into the working directory. Generate unique identifiers for each
+    # alignment.
     template_ids = []
-    for (pdb, chain) in templates:
-        template_ids.append(pdb + chain)
 
+    for alignment in req.alignments:
+        h = hashlib.sha1()
+        h.update(str(alignment))
+        template_ids.append(h.hexdigest())
+
+        pdb = alignment.templ_pdb
         src = '/home/modeller/databases/wwpdb/%s/pdb%s.ent.gz' % (pdb[1:3], pdb)
         dst = pdb + '.pdb.gz'
 
@@ -89,8 +89,8 @@ def process(req, rep):
 
         file.write('%s\n' % query_alignment.safe_substitute(params))
 
-        for (alignment, templ_id) in zip(req.alignments, templates):
-            params = { 'templ_id'    : ''.join(templ_id),
+        for (alignment, templ_id) in zip(req.alignments, template_ids):
+            params = { 'templ_id'    : templ_id,
                        'templ_pdb'   : alignment.templ_pdb + '.pdb',
                        'templ_chain' : alignment.templ_chain,
                        'templ_start' : alignment.templ_start,
