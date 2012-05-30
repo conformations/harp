@@ -42,6 +42,12 @@ def process(req, rep):
     if not req.alignments:
         return
 
+    # In order to prevent file collisions, independent runs of modeller
+    # are executed in separate, sandboxed directories
+    curr_dir = os.getcwd()
+    work_dir = tempfile.mkdtemp()
+    os.chdir(work_dir)
+
     query = 'query'
 
     # Ensure that input alignments are full length. Simultaneously, generate
@@ -119,6 +125,9 @@ def process(req, rep):
         with open(model['name']) as file:
             for line in file:
                 selection.model += line
+
+    os.chdir(curr_dir)
+    shutil.rmtree(work_dir)
 
 
 if __name__ == '__main__':
