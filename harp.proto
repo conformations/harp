@@ -1,25 +1,32 @@
 message Alignment {
-  // method that produced the alignment
-  required string source = 1;
-  required uint32 rank = 2;
+  // Method that produced the alignment (e.g. HHsearch)
+  required string method = 1;
 
-  // query alignment
-  required string query_align = 3;
-  required uint32 query_start = 4;
-  required uint32 query_stop = 5;
 
-  // template alignment
-  required string templ_pdb = 6;
-  required string templ_chain = 7;
-  required string templ_align = 8;
-  required uint32 templ_start = 9;
-  required uint32 templ_stop = 10;
+  // Query sequence alignment
+  required string query_align = 2;
 
-  // confidence in the alignment
-  required double confidence = 11;
+  // Starting index of query alignment (1-based)
+  required uint32 query_start = 3;
 
-  // percentage of query sequence covered
-  required double coverage = 12;
+  // Stopping index of query alignment (1-based)
+  required uint32 query_stop = 4;
+
+
+  // Template identifier (e.g. PDB + chain)
+  required string templ_id = 5;
+
+  // Template sequence alignment
+  required string templ_align = 6;
+
+  // Starting index of template alignment (1-based)
+  required uint32 templ_start = 7;
+
+  // Stopping index of template alignment (1-based)
+  required uint32 templ_stop = 8;
+
+  // Template structure (PDB format)
+  required string templ_structure = 9;
 }
 
 message ModelingRequest {
