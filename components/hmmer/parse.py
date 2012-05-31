@@ -1,4 +1,9 @@
+import gflags
 import re
+
+FLAGS = gflags.FLAGS
+gflags.DEFINE_float('coverage_min', 0.9, 'Candidate alignments must cover at least x% of the query sequence')
+gflags.DEFINE_float('confidence_delta', 0.1, 'Candidate alignments must be within x% of top-ranked alignment')
 
 # Enumeration type used during parsing to signify that the line to be parsed
 # contains either the query sequence or a template sequence
@@ -28,7 +33,7 @@ def parse_line(line, type):
     return (pdb, chain, alignment, start, stop)
 
 
-def parse_block(block, alignment):
+def parse_block(sequence, block, alignment):
     # Indices of query and template sequences in `block`
     qi = None
     ti = None
@@ -54,6 +59,19 @@ def parse_block(block, alignment):
 
     qpdb, qchain, qalign, qstart, qstop = parse_line(block[qi], QUERY)
     tpdb, tchain, talign, tstart, tstop = parse_line(block[ti], TEMPL)
+
+    # Extend the query alignment so that it contains the complete sequence,
+    # padding the template alignment as necessary
+    leading  = sequence[:qstart - 1]
+    trailing = sequence[:qstop]
+
+    qstart = 1
+    qstop  = len(sequence)
+    qalign = leading + qalign + trailing
+
+    leading_gaps  = '-' * len(leading)
+    trailing_gaps = '-' * len(trailing)
+    talign = leading_gaps + talign + trailing_gaps
 
     # Update alignment metadata
     alignment.method = 'hmmer'
@@ -85,28 +103,33 @@ def parse(output, rep):
         # Partition the contents of `output` into alignment blocks delimited by '>>'
         # and EOF. When the next block is encountered, the current one is parsed and
         # added to `rep`.
+        sequence = rep.sequence
+
         for line in file:
             line = line.strip()
 
             if line.startswith('>>'):
                 if block:
                     alignment = rep.alignments.add()
-                    parse_block(block, alignment)
+                    parse_block(sequence, block, alignment)
                     del block[:]
 
             block.append(line)
 
         # Parse the final block
         alignment = rep.alignments.add()
-        parse_block(block, alignment)
+        parse_block(sequence, block, alignment)
 
     # Remove alignments whose confidence is below some delta of the top-ranked
     # alignment. Because protobuf does not provide the ability to remove specific
     # elements from a repeated field, we use del alignment[x].
     if rep.alignments:
-        conf_threshold = rep.alignments[0].confidence * 0.9
+        conf_min = (1 - FLAGS.confidence_delta) * rep.alignments[0].confidence
 
         n = len(rep.alignments)
         for i in range(n - 1, -1, -1):
-            if rep.alignments[i].confidence < conf_threshold:
+            conf = rep.alignments[i].confidence
+            cov  = (rep.alignments[i].templ_stop - rep.alignments[i].templ_start + 1) / float(len(rep.sequence))
+
+            if conf < conf_min or cov < FLAGS.coverage_min:
                 del rep.alignments[i]

@@ -112,6 +112,11 @@ def process(req, rep):
     (handle, tmp_in)  = tempfile.mkstemp()
     (handle, tmp_out) = tempfile.mkstemp()
 
+    # Update carry-over parameters
+    rep.sequence = req.sequence
+    rep.recipient = req.recipient
+    rep.identifier = req.identifier
+
     #  Write query sequence to file in FASTA format
     with open(tmp_in, 'w') as file:
         file.write('> x\n')
@@ -122,11 +127,6 @@ def process(req, rep):
 
     parse(tmp_out, rep)
     fix_alignments(rep.alignments)
-
-    # Update carry-over parameters
-    rep.sequence = req.sequence
-    rep.recipient = req.recipient
-    rep.identifier = req.identifier
 
     try:
         os.remove(tmp_in)
