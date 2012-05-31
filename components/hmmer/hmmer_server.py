@@ -57,6 +57,9 @@ def update_alignments(alignments, filename):
 
 
 def fix_alignments(alignments):
+    if not alignments:
+        return
+
     curr_dir = os.getcwd()
     work_dir = tempfile.mkdtemp()
 
