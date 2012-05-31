@@ -13,20 +13,26 @@ message Alignment {
   required uint32 query_stop = 4;
 
 
-  // Template identifier (e.g. PDB + chain)
-  required string templ_id = 5;
+  // Template pdb
+  required string templ_pdb = 5;
+
+  // Template chain
+  required string templ_chain = 6;
 
   // Template sequence alignment
-  required string templ_align = 6;
+  required string templ_align = 7;
 
   // Starting index of template alignment (1-based)
-  required uint32 templ_start = 7;
+  required uint32 templ_start = 8;
 
   // Stopping index of template alignment (1-based)
-  required uint32 templ_stop = 8;
+  required uint32 templ_stop = 9;
 
   // Template structure (PDB format)
-  required string templ_structure = 9;
+  required string templ_structure = 10;
+
+  // Confidence in the alignment. Larger = more, smaller = less.
+  required double confidence = 11;
 }
 
 message ModelingRequest {
