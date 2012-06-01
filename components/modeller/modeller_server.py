@@ -5,14 +5,9 @@ import modeller
 from proto_util import *
 import zmq
 
-import hashlib
-import os
-import os.path
-import shutil
+import operator
 import string
-import subprocess
 import sys
-import tempfile
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string('incoming', 'tcp://localhost:8001', 'Incoming socket')
@@ -39,95 +34,80 @@ def process(req, rep):
     rep.recipient = req.recipient
     rep.identifier = req.identifier
 
-    # Return immediately when no alignments were found
-    if not req.alignments:
-        return
+    # Collection of (model, score)
+    candidates = []
 
-    # In order to prevent file collisions, independent runs of modeller
-    # are executed in separate, sandboxed directories
-    curr_dir = os.getcwd()
-    work_dir = tempfile.mkdtemp()
-    os.chdir(work_dir)
-
-    query = 'query'
-
-    # Ensure that input alignments are full length
     for a in req.alignments:
         assert a.query_start == 1
         assert a.query_stop == len(req.sequence)
 
-    # Copy compressed template structures from local mirror of the wwpdb
-    # into the working directory. Generate unique identifiers for each
-    # alignment.
-    template_ids = []
+        query_id = 'query'
+        templ_id = str(a.templ_pdb + a.templ_chain)
 
-    for alignment in req.alignments:
-        h = hashlib.sha1()
-        h.update(str(alignment))
-        template_ids.append(h.hexdigest())
+        # Write template structure
+        templ_file = templ_id + '.pdb'
+        with open(templ_file, 'w') as file:
+            file.write('%s\n' % a.templ_structure)
 
-        pdb = alignment.templ_pdb
-        src = '/home/modeller/databases/wwpdb/%s/pdb%s.ent.gz' % (pdb[1:3], pdb)
-        dst = pdb + '.pdb.gz'
+        # Write alignment
+        alignment_file = templ_id + '.ali'
+        with open(alignment_file, 'w') as file:
+            params = { 'query_id'    : query_id,
+                       'query_start' : a.query_start,
+                       'query_stop'  : a.query_stop,
+                       'query_align' : a.query_align }
 
-        if os.path.exists(dst):
-            continue
+            query_line = query_alignment.safe_substitute(params)
 
-        if os.path.exists(src):
-            shutil.copy(src, dst)
-            subprocess.check_call(['gzip', '-df', dst])
-
-    # Generate the alignment file containing the full-length query sequence
-    # and alignments to one or more template structures.
-    alignment_file = 'alignment.pir'
-    with open(alignment_file, 'w') as file:
-        alignment = req.alignments[0]
-        params = { 'query_id'    : query,
-                   'query_start' : alignment.query_start,
-                   'query_stop'  : alignment.query_stop,
-                   'query_align' : alignment.query_align }
-
-        file.write('%s\n' % query_alignment.safe_substitute(params))
-
-        for (alignment, templ_id) in zip(req.alignments, template_ids):
             params = { 'templ_id'    : templ_id,
-                       'templ_pdb'   : alignment.templ_pdb + '.pdb',
-                       'templ_chain' : alignment.templ_chain,
-                       'templ_start' : alignment.templ_start,
-                       'templ_stop'  : alignment.templ_stop,
-                       'templ_align' : alignment.templ_align }
+                       'templ_pdb'   : templ_file,
+                       'templ_chain' : a.templ_chain,
+                       'templ_start' : a.templ_start,
+                       'templ_stop'  : a.templ_stop,
+                       'templ_align' : a.templ_align }
 
-            file.write('%s\n' % templ_alignment.safe_substitute(params))
+            templ_line = templ_alignment.safe_substitute(params)
 
-    # Run modeler
-    modeller.log.verbose()
+            file.write('%s\n' % query_line)
+            file.write('%s\n' % templ_line)
 
-    env = modeller.environ()
-    env.io.atom_files_directory = ['.']
-    a = automodel(env,
-                  alnfile = alignment_file,
-                  knowns = template_ids,
-                  sequence = query,
-                  assess_methods = (DOPE, GA341))
+        # Run modeler
+        modeller.log.verbose()
 
-    a.starting_model = 1  # index of first generated model
-    a.ending_model   = 5  # index of final generated model
-    a.make()
+        env = modeller.environ()
+        env.io.atom_files_directory = ['.']
+        a = automodel(env,
+                      alnfile = alignment_file,
+                      knowns = templ_id,
+                      sequence = query_id,
+                      assess_methods = (DOPE, GA341))
 
-    # Rank successful predictions by DOPE score
-    models = [x for x in a.outputs if x['failure'] is None]
-    models.sort(key = lambda a: a['DOPE score'])
+        a.starting_model = 1  # index of first generated model
+        a.ending_model   = 5  # index of final generated model
+        a.make()
 
-    for (i, model) in enumerate(models):
+        # Rank successful predictions by DOPE score
+        models = [x for x in a.outputs if x['failure'] is None]
+        models.sort(key = lambda a: a['DOPE score'])
+
+        for m in models:
+            with open(m['name']) as file:
+                coords = ''
+                for line in file:
+                    coords += line
+            
+            entry = (coords, m['DOPE score'])
+            candidates.append(entry)
+
+    # After having generated N models for each alignment, select the best 5 by score
+    candidates.sort(key = operator.itemgetter(1))
+    for (i, candidate) in enumerate(candidates):
         selection = rep.selected.add()
+        selection.model = candidate
         selection.rank = i + 1
 
-        with open(model['name']) as file:
-            for line in file:
-                selection.model += line
-
-    os.chdir(curr_dir)
-    shutil.rmtree(work_dir)
+        if (selection.rank == 5):
+            break
 
 
 if __name__ == '__main__':
