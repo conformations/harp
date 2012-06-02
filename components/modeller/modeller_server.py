@@ -6,8 +6,11 @@ from proto_util import *
 import zmq
 
 import operator
+import os
+import shutil
 import string
 import sys
+import tempfile
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string('incoming', 'tcp://localhost:8001', 'Incoming socket')
@@ -29,6 +32,12 @@ def process(req, rep):
     '''Processes a single request to the server, storing the result in `rep`'''
     from modeller.automodel.assess import DOPE, GA341
     from modeller.automodel import automodel
+
+    # In order to prevent file collisions, independent runs of modeller
+    # are executed in separate, sandboxed directories
+    curr_dir = os.getcwd()
+    work_dir = tempfile.mkdtemp()
+    os.chdir(work_dir)
 
     # Populate required fields in the response
     rep.recipient = req.recipient
@@ -101,13 +110,18 @@ def process(req, rep):
 
     # After having generated N models for each alignment, select the best 5 by score
     candidates.sort(key = operator.itemgetter(1))
-    for (i, candidate) in enumerate(candidates):
+    for (i, entry) in enumerate(candidates):
+        candidate, score = entry
+
         selection = rep.selected.add()
         selection.model = candidate
         selection.rank = i + 1
 
         if (selection.rank == 5):
             break
+
+    os.chdir(curr_dir)
+    shutil.rmtree(work_dir)
 
 
 if __name__ == '__main__':
