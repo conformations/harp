@@ -47,9 +47,6 @@ def process(req, rep):
     candidates = []
 
     for a in req.alignments:
-        assert a.query_start == 1
-        assert a.query_stop == len(req.sequence)
-
         query_id = 'query'
         templ_id = str(a.templ_pdb + a.templ_chain)
 
