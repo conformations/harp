@@ -60,19 +60,6 @@ def parse_block(sequence, block, alignment):
     qpdb, qchain, qalign, qstart, qstop = parse_line(block[qi], QUERY)
     tpdb, tchain, talign, tstart, tstop = parse_line(block[ti], TEMPL)
 
-    # Extend the query alignment so that it contains the complete sequence,
-    # padding the template alignment as necessary
-    leading  = sequence[:qstart - 1]
-    trailing = sequence[:qstop]
-
-    qstart = 1
-    qstop  = len(sequence)
-    qalign = leading + qalign + trailing
-
-    leading_gaps  = '-' * len(leading)
-    trailing_gaps = '-' * len(trailing)
-    talign = leading_gaps + talign + trailing_gaps
-
     # Update alignment metadata
     alignment.method = 'hmmer'
     alignment.confidence = bits
