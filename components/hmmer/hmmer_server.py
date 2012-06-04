@@ -62,7 +62,6 @@ def fix_alignments(alignments):
 
     curr_dir = os.getcwd()
     work_dir = tempfile.mkdtemp()
-
     os.chdir(work_dir)
 
     # Convert protobuf to grishin format
@@ -73,7 +72,7 @@ def fix_alignments(alignments):
     # Retrieve template structures, discarding alignments for which the
     # process was unsuccessful. At the conclusion of this block, `templates`
     # will contain absolute paths to each valid template structure.
-    templates = set()
+    templates = []
 
     for (i, alignment) in enumerate(alignments):
         params = { 'pdb' : alignment.templ_pdb, 'chain' : alignment.templ_chain }
@@ -84,9 +83,10 @@ def fix_alignments(alignments):
         filename = os.path.abspath(alignment.templ_pdb + alignment.templ_chain + '.pdb')
 
         if not os.path.exists(filename):
+            print 'Error retrieving pdb=%s, chain=%s' % (alignment.templ_pdb, alignment.templ_chain)
             del alignments[i]
         else:
-            templates.add(filename)
+            templates.append(filename)
 
     # Update alignment numbering to match template
     params = {
