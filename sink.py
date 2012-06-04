@@ -9,7 +9,7 @@ import zmq
 from email.encoders import encode_base64
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import os.path
 import sys
 
 # Gmail account information
@@ -55,6 +55,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # Load account information from file
+    assert os.path.exists(GMAIL)
     username, password = gmail.account_info(GMAIL)
 
     while True:
@@ -63,5 +64,3 @@ if __name__ == '__main__':
 
         proto_recv(fe, rep)
         process(username, password, rep)
-
-        
