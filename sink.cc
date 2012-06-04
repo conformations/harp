@@ -32,13 +32,12 @@ int main(int argc, char* argv[]) {
 
     HarpResponse rep;
     CHECK(proto_recv(&rep, &pull));
-    proto_show(rep, &std::cout);
 
     for (int i = 0; i < rep.selected_size(); ++i) {
       HarpResponse_Selection selected = rep.selected(i);
-      
+
       std::stringstream ss;
-      ss << "model" << selected.rank() << ".pdb";
+      ss << rep.identifier() << "_model_" << selected.rank() << ".pdb";
       write_contents(ss.str().c_str(), selected.model());
     }
   }
