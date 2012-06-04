@@ -9,15 +9,11 @@ def account_info(filename):
     assert 'password' in obj
     return obj['username'], obj['password']
 
-def email(username, password, sender, recipient, subject, body):
-  msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n" % (sender, recipient, subject))
-  msg += body
-  msg += "\r\n"
-
+def send(username, password, msg):
   server = smtplib.SMTP('smtp.gmail.com', 587)
   server.set_debuglevel(1)
   server.ehlo()
   server.starttls()
   server.login(username, password)
-  server.sendmail(sender, recipient, msg)
+  server.sendmail(msg['From'], msg['To'], msg.as_string())
   server.quit()
