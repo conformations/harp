@@ -35,7 +35,11 @@ def process(username, password, rep):
 
         msg.attach(part)
 
-    gmail.send(username, password, msg)
+    try:
+        gmail.send(username, password, msg)
+        print 'Sent results for %s to recipient=%s' % (msg['Subject'], msg['To'])
+    except:
+        sys.stderr.write('Failed to send results for %s to recipient=%s\n' % (msg['Subject'], msg['To']))
 
 
 if __name__ == '__main__':

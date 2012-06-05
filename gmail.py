@@ -11,7 +11,6 @@ def account_info(filename):
 
 def send(username, password, msg):
   server = smtplib.SMTP('smtp.gmail.com', 587)
-  server.set_debuglevel(1)
   server.ehlo()
   server.starttls()
   server.login(username, password)
