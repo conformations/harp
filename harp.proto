@@ -57,6 +57,7 @@ message HarpResponse {
   message Selection {
     required uint32 rank = 1;
     required string model = 2;
+    required Alignment alignment = 3;
   }
 
   // identifier for this job

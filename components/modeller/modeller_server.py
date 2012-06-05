@@ -43,7 +43,7 @@ def process(req, rep):
     rep.recipient = req.recipient
     rep.identifier = req.identifier
 
-    # Collection of (model, score)
+    # Collection of (model, alignment, score)
     candidates = []
 
     for a in req.alignments:
@@ -102,18 +102,19 @@ def process(req, rep):
                 for line in file:
                     coords += line
             
-            entry = (coords, m['DOPE score'])
+            entry = (coords, a, m['DOPE score'])
             candidates.append(entry)
 
     # After having generated N models for each alignment, select the best 5 by score
-    candidates.sort(key = operator.itemgetter(1))
+    candidates.sort(key = operator.itemgetter(-1))
     for (i, entry) in enumerate(candidates):
-        candidate, score = entry
+        candidate, alignment, score = entry
 
         selection = rep.selected.add()
+        selection.alignment = alignment
         selection.model = candidate
         selection.rank = i + 1
-
+        
         if (selection.rank == 5):
             break
 
