@@ -14,7 +14,10 @@ import os.path
 import sys
 
 # Logging configuration
-logging.basicConfig(format = '%(asctime)-15s %(message)s')
+logging.basicConfig(filename = 'sink.log',
+                    format = '%(asctime)-15s %(message)s',
+                    level = logging.INFO)
+
 logger = logging.getLogger('sink')
 
 # Command line flags
@@ -68,9 +71,11 @@ if __name__ == '__main__':
         logger.error('Failed to connect incoming socket: %s' % FLAGS.incoming)
         sys.exit(1)
 
-    # Load account information from file
-    assert os.path.exists(FLAGS.conf)
-    username, password = gmail.account_info(FLAGS.conf)
+    try:
+        mailer = gmail.GMail(FLAGS.conf)
+    except Exception as e:
+        logger.error('Failed to configure mailer: %s' % e)
+        sys.exit(1)
 
     while True:
         sender_uid = fe.recv()
