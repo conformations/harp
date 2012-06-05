@@ -6,40 +6,53 @@ import harp_pb2
 import gflags
 import zmq
 
-from email.encoders import encode_base64
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
+import email.encoders
+import email.mime.base
+import email.mime.multipart
+import email.mime.text
+import logging
 import os.path
 import sys
 
-# Gmail account information
-GMAIL = '/home/modeller/conf/gmail.conf'
+# Logging configuration
+logging.basicConfig(format = '%(asctime)-15s %(message)s')
+logger = logging.getLogger('sink')
 
+# Command line flags
 FLAGS = gflags.FLAGS
-gflags.DEFINE_string('incoming', 'tcp://localhost:8001', 'Incoming socket')
+gflags.DEFINE_string('conf', '/home/modeller/conf/gmail.conf', 'JSON-format configuration file')
+gflags.DEFINE_string('incoming', 'tcp://localhost:8005', 'Incoming socket')
+
 
 def process(username, password, rep):
-    msg = MIMEMultipart()
+    '''Constructs and sends the reply email for a single job'''
+    logger.info('Processing response for job=%s, recipient=%s, models=%d' % (rep.identifier, rep.recipient, len(rep.selected)))
+    
+    msg = email.mime.multipart.MIMEMultipart()
     msg['Subject'] = 'HARP results -- %s' % rep.identifier
     msg['From'] = username
     msg['To'] = rep.recipient
 
-    # Construct the reply email and a series of attachments
+    # TODO(cmiles) store alignment information in the email body
+
+    # Construct the reply email and attach selected models
     for selected in rep.selected:
-        filename = 'model%d.pdb' % selected.rank
-
-        part = MIMEBase('application', "octet-stream")
+        part = email.mime.base.MIMEBase('application', "octet-stream")
         part.set_payload(selected.model)
-        encode_base64(part)
-        part.add_header('Content-Disposition', 'attachment; filename="%s"' % filename)
+        email.encoders.encode_base64(part)
 
+        filename = 'model%d.pdb' % selected.rank
+        part.add_header('Content-Disposition', 'attachment; filename="%s"' % filename)
         msg.attach(part)
 
+    # Attempt to send the reply email
+    status = True
     try:
         gmail.send(username, password, msg)
-        print 'Sent results for %s to recipient=%s' % (msg['Subject'], msg['To'])
     except:
-        sys.stderr.write('Failed to send results for %s to recipient=%s\n' % (msg['Subject'], msg['To']))
+        status = False
+    finally:
+        logger.info('Sent response email for job=%s to recipient=%s, status=%s' % (rep.identifier, rep.recipient, status))
 
 
 if __name__ == '__main__':
@@ -55,16 +68,15 @@ if __name__ == '__main__':
     try:
         fe.connect(FLAGS.incoming)
     except:
-        sys.stderr.write('Failed to connect incoming socket: %s\n' % FLAGS.incoming)
+        logger.error('Failed to connect incoming socket: %s' % FLAGS.incoming)
         sys.exit(1)
 
     # Load account information from file
-    assert os.path.exists(GMAIL)
-    username, password = gmail.account_info(GMAIL)
+    assert os.path.exists(FLAGS.conf)
+    username, password = gmail.account_info(FLAGS.conf)
 
     while True:
         sender_uid = fe.recv()
         rep = harp_pb2.HarpResponse()
-
         proto_recv(fe, rep)
         process(username, password, rep)
