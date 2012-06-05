@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -I/usr/local/include -Icommon -fPIC
-LDFLAGS = -L/usr/local/lib -lboost_regex -lgflags -lglog -lprotobuf -lzmq -g0 -O3
+LDFLAGS = -L/usr/local/lib -lgflags -lglog -lprotobuf -lzmq -g0 -O3
 
 # See GNU Make, section "Chains of Implicit Rules"
 # ftp://ftp.gnu.org/pub/pub/old-gnu/Manuals/make-3.79.1/html_chapter/make_10.html#SEC97
@@ -25,7 +25,7 @@ splitter: splitter.o
 libharp.a : harp.pb.o str_util.o
 	$(CC) $(LDFLAGS) -fPIC -static $^ -o $@
 
-libharp.so : harp.pb.o str_util.o
+libharp.so : harp.pb.o
 	$(CC) $(LDFLAGS) -fPIC -shared $^ -o $@
 
 # compile
