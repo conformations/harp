@@ -45,6 +45,10 @@ class GMail:
     return obj['username'], obj['password']
 
 
+  def sender(self):
+    return self.__username
+
+
   def send(self, msg):
     try:
       server = smtplib.SMTP(host = 'smtp.gmail.com', port = 587, timeout = 10)

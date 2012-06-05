@@ -26,13 +26,13 @@ gflags.DEFINE_string('conf', '/home/modeller/conf/gmail.conf', 'JSON-format conf
 gflags.DEFINE_string('incoming', 'tcp://localhost:8005', 'Incoming socket')
 
 
-def process(username, password, rep):
+def process(mailer, rep):
     '''Constructs and sends the reply email for a single job'''
     logger.info('Processing response for job=%s, recipient=%s, models=%d' % (rep.identifier, rep.recipient, len(rep.selected)))
-    
+
     msg = email.mime.multipart.MIMEMultipart()
     msg['Subject'] = 'HARP results -- %s' % rep.identifier
-    msg['From'] = username
+    msg['From'] = mailer.sender()
     msg['To'] = rep.recipient
 
     # Construct the reply email and attach selected models
@@ -48,7 +48,7 @@ def process(username, password, rep):
     # Attempt to send the reply email
     status = True
     try:
-        gmail.send(username, password, msg)
+        mailer.send(msg)
     except:
         status = False
     finally:
@@ -81,4 +81,4 @@ if __name__ == '__main__':
         sender_uid = fe.recv()
         rep = harp_pb2.HarpResponse()
         proto_recv(fe, rep)
-        process(username, password, rep)
+        process(mailer, rep)

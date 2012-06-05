@@ -82,19 +82,19 @@ def process(req, rep):
 
         env = modeller.environ()
         env.io.atom_files_directory = ['.']
-        a = automodel(env,
-                      alnfile = alignment_file,
-                      knowns = templ_id,
-                      sequence = query_id,
-                      assess_methods = (DOPE, GA341))
+        am = automodel(env,
+                       alnfile = alignment_file,
+                       knowns = templ_id,
+                       sequence = query_id,
+                       assess_methods = (DOPE, GA341))
 
-        a.starting_model = 1  # index of first generated model
-        a.ending_model   = 5  # index of final generated model
-        a.make()
+        am.starting_model = 1  # index of first generated model
+        am.ending_model   = 5  # index of final generated model
+        am.make()
 
         # Rank successful predictions by DOPE score
-        models = [x for x in a.outputs if x['failure'] is None]
-        models.sort(key = lambda a: a['DOPE score'])
+        models = [x for x in am.outputs if x['failure'] is None]
+        models.sort(key = lambda x: x['DOPE score'])
 
         for m in models:
             with open(m['name']) as file:
@@ -111,10 +111,14 @@ def process(req, rep):
         candidate, alignment, score = entry
 
         selection = rep.selected.add()
-        selection.alignment = alignment
         selection.model = candidate
         selection.rank = i + 1
-        
+
+        # Message types cannot be assigned directory (e.g. x.field = field).
+        # For additional details, read the "Singular Message Fields" section in:
+        # https://developers.google.com/protocol-buffers/docs/reference/python-generated#fields
+        selection.alignment.ParseFromString(alignment.SerializeToString())
+
         if (selection.rank == 5):
             break
 
