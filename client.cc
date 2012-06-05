@@ -11,39 +11,42 @@
 
 #include <exception>
 #include <fstream>
+#include <map>
 #include <string>
-#include <vector>
 
 DEFINE_string(outgoing, "tcp://localhost:8000", "Outgoing socket");
 DEFINE_string(fasta, "", "File containing the query sequence in FASTA format");
 DEFINE_string(email, "", "Email address of recipient");
-DEFINE_string(id, "", "Identifier for this job");
 
 using namespace std;
 
-void read_sequences(const string& filename, vector<string>* sequences) {
+void read_sequences(const string& filename, map<string, string>* sequences) {
   CHECK_NOTNULL(sequences);
 
   ifstream file(filename.c_str());
   CHECK(file.is_open());
 
-  string buffer, line;
+  string line;
+  string header, sequence;
+
   while (file.good()) {
     getline(file, line);
 
     if (boost::starts_with(line, ">")) {
-      // Create a new block, writing the previous one (if it exists) to `sequences`
-      if (buffer.length()) {
-        sequences->push_back(buffer);
-        buffer.clear();
+      // Create a new block, writing the previous one (if it exists)
+      if (sequence.length()) {
+	(*sequences)[header] = sequence;
+	sequence.clear();
       }
+
+      header = line;
     } else {
-      buffer += line;
+	sequence += line;
     }
   }
 
   // Write the final block
-  sequences->push_back(buffer);
+  (*sequences)[header] = sequence;
   file.close();
 }
 
@@ -56,7 +59,6 @@ int main(int argc, char* argv[]) {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   // Validate arguments
-  CHECK(!FLAGS_id.empty()) << "Failed to provide required argument --id";
   CHECK(!FLAGS_email.empty()) << "Failed to provide required argument --email";
   CHECK(!FLAGS_fasta.empty()) << "Failed to provide required argument --fasta";
 
@@ -69,13 +71,16 @@ int main(int argc, char* argv[]) {
     LOG(FATAL) << "Failed to connect outbound socket: " << FLAGS_outgoing;
   }
 
-  vector<string> sequences;
+  map<string, string> sequences;
   read_sequences(FLAGS_fasta, &sequences);
 
-  for (vector<string>::const_iterator i = sequences.begin(); i != sequences.end(); ++i) {
+  for (map<string, string>::const_iterator i = sequences.begin(); i != sequences.end(); ++i) {
+    const string& id  = i->first;
+    const string& seq = i->second;
+
     HarpRequest req;
-    req.set_sequence(*i);
-    req.set_identifier(FLAGS_id);
+    req.set_sequence(seq);
+    req.set_identifier(id);
     req.set_recipient(FLAGS_email);
     CHECK(proto_send(req, &comp));
   }
