@@ -9,7 +9,6 @@ import zmq
 import email.encoders
 import email.mime.base
 import email.mime.multipart
-import email.mime.text
 import logging
 import os.path
 import sys
@@ -32,8 +31,6 @@ def process(username, password, rep):
     msg['Subject'] = 'HARP results -- %s' % rep.identifier
     msg['From'] = username
     msg['To'] = rep.recipient
-
-    # TODO(cmiles) store alignment information in the email body
 
     # Construct the reply email and attach selected models
     for selected in rep.selected:
