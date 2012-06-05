@@ -1,14 +1,6 @@
 import json
-import logging
 import os.path
 import smtplib
-
-# Logging configuration
-logging.basicConfig(filename = 'gmail.log',
-                    format = '%(asctime)-15s %(message)s',
-                    level = logging.INFO)
-
-logger = logging.getLogger('gmail')
 
 class SendError(Exception):
   def __init__(self, msg):
@@ -21,8 +13,6 @@ class SendError(Exception):
 class GMail:
   def __init__(self, conf):
     self.__username, self.__password = self.__account_info(conf)
-    logger.info('Loaded configuration info from %s' % conf)
-
 
   def __account_info(self, filename):
     '''Loads GMail authentication information from filename. Throws IOError if

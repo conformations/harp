@@ -13,20 +13,13 @@ import logging
 import os.path
 import sys
 
-# Logging configuration
-logging.basicConfig(filename = 'sink.log',
-                    format = '%(asctime)-15s %(message)s',
-                    level = logging.INFO)
-
-logger = logging.getLogger('sink')
-
 # Command line flags
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string('conf', '/home/modeller/conf/gmail.conf', 'JSON-format configuration file')
 gflags.DEFINE_string('incoming', 'tcp://localhost:8005', 'Incoming socket')
 
 
-def process(mailer, rep):
+def process(logger, mailer, rep):
     '''Constructs and sends the reply email for a single job'''
     logger.info('Processing response for job=%s, recipient=%s, models=%d' % (rep.identifier, rep.recipient, len(rep.selected)))
 
@@ -62,6 +55,14 @@ if __name__ == '__main__':
         print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
         sys.exit(1)
 
+    # Setup logging
+    logging.basicConfig(filename = 'sink.log',
+                        format = '%(asctime)-15s %(message)s',
+                        level = logging.INFO)
+
+    logger = logging.getLogger('sink')
+
+    # Setup ZeroMQ
     context = zmq.Context()
     fe = context.socket(zmq.PULL)
 
@@ -71,6 +72,7 @@ if __name__ == '__main__':
         logger.error('Failed to connect incoming socket: %s' % FLAGS.incoming)
         sys.exit(1)
 
+    # Setup email
     try:
         mailer = gmail.GMail(FLAGS.conf)
     except Exception as e:
@@ -81,4 +83,4 @@ if __name__ == '__main__':
         sender_uid = fe.recv()
         rep = harp_pb2.HarpResponse()
         proto_recv(fe, rep)
-        process(mailer, rep)
+        process(logger, mailer, rep)
