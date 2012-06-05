@@ -54,6 +54,7 @@ def update_alignments(alignments, filename):
 
         alignment.templ_start = tstart + 1
         alignment.templ_align = talign
+        alignment.templ_stop  = len(filter(lambda x: x != '-', talign))
 
 
 def fix_alignments(alignments):
