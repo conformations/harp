@@ -22,9 +22,6 @@ splitter: splitter.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # libraries
-libharp.a : harp.pb.o str_util.o
-	$(CC) $(LDFLAGS) -fPIC -static $^ -o $@
-
 libharp.so : harp.pb.o
 	$(CC) $(LDFLAGS) -fPIC -shared $^ -o $@
 
