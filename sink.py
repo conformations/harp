@@ -82,5 +82,11 @@ if __name__ == '__main__':
     while True:
         sender_uid = fe.recv()
         rep = harp_pb2.HarpResponse()
-        proto_recv(fe, rep)
-        process(logger, mailer, rep)
+
+        try:
+            proto_recv(fe, rep)
+            process(logger, mailer, rep)
+        except Exception as e:
+            logger.error('Failed to parse incoming message; expected HarpResponse')
+            logger.error(e)
+
