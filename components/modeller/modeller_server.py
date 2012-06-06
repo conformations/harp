@@ -5,6 +5,7 @@ import modeller
 from proto_util import *
 import zmq
 
+import logging
 import operator
 import os
 import shutil
@@ -113,13 +114,19 @@ def process(req, rep):
         coords, alignment, score = entry
 
         selection = rep.selected.add()
-        selection.model = coords
         selection.rank = i + 1
 
         # Message types cannot be assigned directory (e.g. x.field = field).
         # For additional details, read the "Singular Message Fields" section in:
         # https://developers.google.com/protocol-buffers/docs/reference/python-generated#fields
         selection.alignment.ParseFromString(alignment.SerializeToString())
+
+        # Append alignment information to bottom of PDB file
+        selection.model = coords
+        selection.model += 'Source: %s\n' % alignment.method
+        selection.model += 'Template: %s%s\n' % (alignment.templ_pdb, alignment.templ_chain)
+        selection.model += 'Query alignment: %s\n' % alignment.query_align
+        selection.model += 'Templ alignment: %s\n' % alignment.templ_align
 
         if (selection.rank == FLAGS.max_models_to_return):
             break
@@ -134,6 +141,13 @@ if __name__ == '__main__':
     except gflags.FlagsError, e:
         print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
         sys.exit(1)
+
+    # Setup logging
+    logging.basicConfig(filename = 'modeller_server.log',
+                        format = '%(asctime)-15s %(message)s',
+                        level = logging.INFO)
+
+    logger = logging.getLogger('modeller_server')
 
     # Setup ZeroMQ
     context = zmq.Context()

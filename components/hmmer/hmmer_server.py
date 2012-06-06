@@ -6,6 +6,7 @@ import harp_pb2
 import gflags
 import zmq
 
+import logging
 import os
 import os.path
 import shutil
@@ -150,6 +151,14 @@ if __name__ == '__main__':
     assert os.path.exists(FLAGS.exe)
     assert os.path.exists(FLAGS.db)
 
+    # Setup logging
+    logging.basicConfig(filename = 'hmmer_server.log',
+                        format = '%(asctime)-15s %(message)s',
+                        level = logging.INFO)
+
+    logger = logging.getLogger('hmmer_server')
+
+    # Setup ZeroMQ
     context = zmq.Context()
     fe = context.socket(zmq.PULL)
     be = context.socket(zmq.PUSH)
