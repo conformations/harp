@@ -171,6 +171,16 @@ if __name__ == '__main__':
         req = harp_pb2.HarpRequest()
         rep = harp_pb2.ModelingRequest()
 
-        proto_recv(fe, req)
-        process(req, rep)
-        proto_send(be, rep)
+        try:
+            proto_recv(fe, req)
+
+            try:
+                process(req, rep)
+                proto_send(be, rep)
+            except Exception as e:
+                logger.error('Error occurred while processing request')
+                logger.error(e)
+
+        except Exception as e:
+            logger.error('Failed to parse incoming message; expected HarpRequest')
+            logger.error(e)
