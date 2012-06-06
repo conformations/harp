@@ -21,9 +21,12 @@ gflags.DEFINE_string('outgoing', 'tcp://localhost:8002', 'Outgoing socket')
 gflags.DEFINE_string('exe', '/usr/local/bin/phmmer', 'Absolute path to hmmer executable')
 gflags.DEFINE_string('db', '/home/hmmer/databases/pdbaa', 'Absolute path to hmmer database')
 
+gflags.DEFINE_string('rosetta_dir', '/home/hmmer/src/rosetta/rosetta', 'Absolute path to rosetta directory')
+gflags.DEFINE_string('cm_dir', '/home/hmmer/src/cm_scripts', 'Absolute path to cm_scripts directory')
+
 hmmer_cmd = string.Template('$exe --notextw -o $out $fasta $db')
-fetch_cmd = string.Template('/home/hmmer/src/cm_scripts/bin/get_pdb.py $pdb $chain')
-match_cmd = string.Template('/home/hmmer/src/rosetta/rosetta_source/bin/fix_alignment_to_match_pdb.default.linuxgccrelease -database /home/hmmer/src/rosetta/rosetta_database -in:file:alignment $align_in -out:file:alignment $align_out -cm:aln_format grishin -in:file:template_pdb $templates')
+fetch_cmd = string.Template('$base_dir/bin/get_pdb.py $pdb $chain')
+match_cmd = string.Template('$base_dir/rosetta_source/bin/fix_alignment_to_match_pdb.default.linuxgccrelease -database $base_dir/rosetta_database -in:file:alignment $align_in -out:file:alignment $align_out -cm:aln_format grishin -in:file:template_pdb $templates')
 
 def update_alignments(alignments, filename):
     # Partitions the Grishin-format alignment into blocks delimited by --
@@ -77,7 +80,7 @@ def fix_alignments(alignments):
     templates = []
 
     for (i, alignment) in enumerate(alignments):
-        params = { 'pdb' : alignment.templ_pdb, 'chain' : alignment.templ_chain }
+        params = { 'pdb' : alignment.templ_pdb, 'chain' : alignment.templ_chain, 'base_dir' : FLAGS.cm_dir }
         subprocess.check_call(fetch_cmd.safe_substitute(params).split())
 
         # Verify that the template structure was successfully retrieved.
@@ -92,9 +95,10 @@ def fix_alignments(alignments):
 
     # Update alignment numbering to match template
     params = {
-        'align_in' : alignment_in,
+        'align_in'  : alignment_in,
         'align_out' : alignment_out,
-        'templates' : ' '.join(templates)
+        'templates' : ' '.join(templates),
+        'base_dir'  : FLAGS.rosetta_dir,
         }
 
     subprocess.check_call(match_cmd.safe_substitute(params).split())
