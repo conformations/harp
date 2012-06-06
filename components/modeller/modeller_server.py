@@ -15,6 +15,8 @@ import tempfile
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string('incoming', 'tcp://localhost:8001', 'Incoming socket')
 gflags.DEFINE_string('outgoing', 'tcp://localhost:8002', 'Outgoing socket')
+gflags.DEFINE_integer('max_models_to_return', 5, 'Maximum number of models to return')
+gflags.DEFINE_integer('models_per_alignment', 5, 'Number of models to generate for each alignment')
 
 query_alignment = string.Template('''
 >P1;$query_id
@@ -88,21 +90,21 @@ def process(req, rep):
                        sequence = query_id,
                        assess_methods = (DOPE, GA341))
 
-        am.starting_model = 1  # index of first generated model
-        am.ending_model   = 5  # index of final generated model
+        am.starting_model = 1
+        am.ending_model   = FLAGS.models_per_alignment
         am.make()
 
         # Rank successful predictions by DOPE score
         models = [x for x in am.outputs if x['failure'] is None]
         models.sort(key = lambda x: x['DOPE score'])
 
-        for m in models:
-            with open(m['name']) as file:
+        for model in models:
+            with open(model['name']) as file:
                 coords = ''
                 for line in file:
                     coords += line
             
-            entry = (coords, alignment, m['DOPE score'])
+            entry = (coords, alignment, model['DOPE score'])
             candidates.append(entry)
 
     # After having generated N models for each alignment, select the best 5 by score
@@ -119,7 +121,7 @@ def process(req, rep):
         # https://developers.google.com/protocol-buffers/docs/reference/python-generated#fields
         selection.alignment.ParseFromString(alignment.SerializeToString())
 
-        if (selection.rank == 5):
+        if (selection.rank == FLAGS.max_models_to_return):
             break
 
     os.chdir(curr_dir)
