@@ -2,7 +2,7 @@ import gflags
 import re
 
 FLAGS = gflags.FLAGS
-gflags.DEFINE_float('coverage_min', 0.9, 'Candidate alignments must cover at least x% of the query sequence')
+gflags.DEFINE_float('coverage_min', 0.8, 'Candidate alignments must cover at least x% of the query sequence')
 gflags.DEFINE_float('confidence_delta', 0.1, 'Candidate alignments must be within x% of top-ranked alignment')
 
 # Enumeration type used during parsing to signify that the line to be parsed
