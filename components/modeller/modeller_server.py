@@ -33,8 +33,8 @@ def process(req, rep):
     from modeller.automodel.assess import DOPE, GA341
     from modeller.automodel import automodel
 
-    # In order to prevent file collisions, independent runs of modeller
-    # are executed in separate, sandboxed directories
+    # In order to prevent filename collisions, independent runs of modeller
+    # are executed in separate directories
     curr_dir = os.getcwd()
     work_dir = tempfile.mkdtemp()
     os.chdir(work_dir)
@@ -46,31 +46,31 @@ def process(req, rep):
     # Collection of (model, alignment, score)
     candidates = []
 
-    for a in req.alignments:
+    for alignment in req.alignments:
         query_id = 'query'
-        templ_id = str(a.templ_pdb + a.templ_chain)
+        templ_id = str(alignment.templ_pdb + alignment.templ_chain)
 
         # Write template structure
         templ_file = templ_id + '.pdb'
         with open(templ_file, 'w') as file:
-            file.write('%s\n' % a.templ_structure)
+            file.write('%s\n' % alignment.templ_structure)
 
         # Write alignment
         alignment_file = templ_id + '.ali'
         with open(alignment_file, 'w') as file:
             params = { 'query_id'    : query_id,
-                       'query_start' : a.query_start,
-                       'query_stop'  : a.query_stop,
-                       'query_align' : a.query_align }
+                       'query_start' : alignment.query_start,
+                       'query_stop'  : alignment.query_stop,
+                       'query_align' : alignment.query_align }
 
             query_line = query_alignment.safe_substitute(params)
 
             params = { 'templ_id'    : templ_id,
                        'templ_pdb'   : templ_file,
-                       'templ_chain' : a.templ_chain,
-                       'templ_start' : a.templ_start,
-                       'templ_stop'  : a.templ_stop,
-                       'templ_align' : a.templ_align }
+                       'templ_chain' : alignment.templ_chain,
+                       'templ_start' : alignment.templ_start,
+                       'templ_stop'  : alignment.templ_stop,
+                       'templ_align' : alignment.templ_align }
 
             templ_line = templ_alignment.safe_substitute(params)
 
@@ -102,16 +102,16 @@ def process(req, rep):
                 for line in file:
                     coords += line
             
-            entry = (coords, a, m['DOPE score'])
+            entry = (coords, alignment, m['DOPE score'])
             candidates.append(entry)
 
     # After having generated N models for each alignment, select the best 5 by score
     candidates.sort(key = operator.itemgetter(-1))
     for (i, entry) in enumerate(candidates):
-        candidate, alignment, score = entry
+        coords, alignment, score = entry
 
         selection = rep.selected.add()
-        selection.model = candidate
+        selection.model = coords
         selection.rank = i + 1
 
         # Message types cannot be assigned directory (e.g. x.field = field).
@@ -133,6 +133,7 @@ if __name__ == '__main__':
         print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
         sys.exit(1)
 
+    # Setup ZeroMQ
     context = zmq.Context()
     fe = context.socket(zmq.PULL)
     be = context.socket(zmq.PUSH)
