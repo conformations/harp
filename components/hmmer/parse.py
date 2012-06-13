@@ -2,7 +2,7 @@ import gflags
 import re
 
 FLAGS = gflags.FLAGS
-gflags.DEFINE_float('coverage_min', 0.8, 'Candidate alignments must cover at least x% of the query sequence')
+gflags.DEFINE_float('coverage_threshold', 0.9, 'Candidate alignments must cover at least x% of the query sequence')
 gflags.DEFINE_float('confidence_delta', 0.1, 'Candidate alignments must be within x% of top-ranked alignment')
 
 # Enumeration type used during parsing to signify that the line to be parsed
@@ -111,12 +111,13 @@ def parse(output, rep):
     # alignment. Because protobuf does not provide the ability to remove specific
     # elements from a repeated field, we use del alignment[x].
     if rep.alignments:
-        conf_min = (1 - FLAGS.confidence_delta) * rep.alignments[0].confidence
+        max_conf = reduce(max, [a.confidence for a in rep.alignments])
+        conf_threshold = (1 - FLAGS.confidence_delta) * max_conf
 
         n = len(rep.alignments)
         for i in range(n - 1, -1, -1):
             conf = rep.alignments[i].confidence
             cov  = (rep.alignments[i].templ_stop - rep.alignments[i].templ_start + 1) / float(len(rep.sequence))
-
-            if conf < conf_min or cov < FLAGS.coverage_min:
+            if conf < conf_threshold or cov < FLAGS.coverage_threshold:
                 del rep.alignments[i]
+                
