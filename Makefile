@@ -9,7 +9,7 @@ LDFLAGS = -L/usr/local/lib -lgflags -lglog -lprotobuf -lzmq -g0 -O3
 all: broker client splitter
 
 clean:
-	rm -f *.o *.so *.pb.cc *.pb.h *_pb2.py broker client splitter
+	rm -f *.o *.so *.pb.cc *.pb.h *_pb2.py *.pyc broker client splitter
 
 # binaries
 broker: broker.o
