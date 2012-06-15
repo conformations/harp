@@ -21,7 +21,7 @@ gflags.DEFINE_string('outgoing', 'tcp://localhost:8002', 'Outgoing socket')
 gflags.DEFINE_string('exe', '/usr/local/bin/phmmer', 'Absolute path to hmmer executable')
 gflags.DEFINE_string('db', '/home/hmmer/databases/pdbaa', 'Absolute path to hmmer database')
 
-gflags.DEFINE_string('rosetta_dir', '/home/hmmer/src/rosetta/rosetta', 'Absolute path to rosetta directory')
+gflags.DEFINE_string('rosetta_dir', '/home/hmmer/src/rosetta', 'Absolute path to rosetta directory')
 gflags.DEFINE_string('cm_dir', '/home/hmmer/src/cm_scripts', 'Absolute path to cm_scripts directory')
 
 hmmer_cmd = string.Template('$exe --notextw -o $out $fasta $db')
