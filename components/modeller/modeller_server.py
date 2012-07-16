@@ -17,7 +17,8 @@ FLAGS = gflags.FLAGS
 gflags.DEFINE_string('incoming', 'tcp://localhost:8001', 'Incoming socket')
 gflags.DEFINE_string('outgoing', 'tcp://localhost:8002', 'Outgoing socket')
 gflags.DEFINE_integer('max_models_to_return', 5, 'Maximum number of models to return')
-gflags.DEFINE_integer('models_per_alignment', 5, 'Number of models to generate for each alignment')
+gflags.DEFINE_integer('models_per_alignment', 1, 'Number of models to generate for each alignment')
+logging.basicConfig(filename = 'modeller_server.log', format = '%(asctime)-15s %(message)s', level = logging.INFO)
 
 query_alignment = string.Template('''
 >P1;$query_id
@@ -32,17 +33,11 @@ $templ_align*
 ''')
 
 
-logging.basicConfig(filename = 'modeller_server.log',
-                    format = '%(asctime)-15s %(message)s',
-                    level = logging.INFO)
-
-logger = logging.getLogger('modeller_server')
-
-
 def process(req, rep):
     '''Processes a single request to the server, storing the result in `rep`'''
     from modeller.automodel.assess import DOPE, GA341
     from modeller.automodel import automodel
+    logger = logging.getLogger('modeller_server')
     logger.info('Processing job=%s, recipient=%s, alignments=%d' % (req.identifier, req.recipient, len(req.alignments)))
 
     # In order to prevent filename collisions, independent runs of modeller
@@ -55,9 +50,8 @@ def process(req, rep):
     rep.recipient = req.recipient
     rep.identifier = req.identifier
 
-    # Collection of (model, alignment, score)
+    # N * M (model, alignment, score) tuples, where N = #alignments and M = #models per alignment
     candidates = []
-
     for alignment in req.alignments:
         query_id = 'query'
         templ_id = str(alignment.templ_pdb + alignment.templ_chain)
@@ -76,6 +70,7 @@ def process(req, rep):
                        'query_align' : alignment.query_align }
 
             query_line = query_alignment.safe_substitute(params)
+            file.write('%s\n' % query_line)
 
             params = { 'templ_id'    : templ_id,
                        'templ_pdb'   : templ_file,
@@ -85,13 +80,10 @@ def process(req, rep):
                        'templ_align' : alignment.templ_align }
 
             templ_line = templ_alignment.safe_substitute(params)
-
-            file.write('%s\n' % query_line)
             file.write('%s\n' % templ_line)
 
         # Run modeler
         modeller.log.verbose()
-
         env = modeller.environ()
         env.io.atom_files_directory = ['.']
         am = automodel(env,
@@ -101,12 +93,13 @@ def process(req, rep):
                        assess_methods = (DOPE, GA341))
 
         am.starting_model = 1
-        am.ending_model   = FLAGS.models_per_alignment
+        am.ending_model = FLAGS.models_per_alignment
         am.make()
 
         # Rank successful predictions by DOPE score
         models = [x for x in am.outputs if x['failure'] is None]
         models.sort(key = lambda x: x['DOPE score'])
+        logger.info('Produced %d models for alignment %s' % (len(models), templ_id))
 
         for model in models:
             with open(model['name']) as file:
@@ -117,26 +110,24 @@ def process(req, rep):
             entry = (coords, alignment, model['DOPE score'])
             candidates.append(entry)
 
-    # After having generated N models for each alignment, select the best 5 by score
+    # Sort all N * M candidate models in increasing order of DOPE score, returning the top K
     candidates.sort(key = operator.itemgetter(-1))
     for (i, entry) in enumerate(candidates):
         coords, alignment, score = entry
-
         selection = rep.selected.add()
         selection.rank = i + 1
+
+        # Append alignment information to bottom of PDB file
+        selection.model = coords
+        selection.model += 'Source: %s\n' % alignment.method
+        selection.model += 'Template: %s\n' % templ_id
+        selection.model += 'Query alignment: %s\n' % alignment.query_align
+        selection.model += 'Templ alignment: %s\n' % alignment.templ_align
 
         # Message types cannot be assigned directory (e.g. x.field = field).
         # For additional details, read the "Singular Message Fields" section in:
         # https://developers.google.com/protocol-buffers/docs/reference/python-generated#fields
         selection.alignment.ParseFromString(alignment.SerializeToString())
-
-        # Append alignment information to bottom of PDB file
-        selection.model = coords
-        selection.model += 'Source: %s\n' % alignment.method
-        selection.model += 'Template: %s%s\n' % (alignment.templ_pdb, alignment.templ_chain)
-        selection.model += 'Query alignment: %s\n' % alignment.query_align
-        selection.model += 'Templ alignment: %s\n' % alignment.templ_align
-
         if (selection.rank == FLAGS.max_models_to_return):
             break
 
@@ -152,10 +143,10 @@ if __name__ == '__main__':
         print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
         sys.exit(1)
 
-    # Setup ZeroMQ
     context = zmq.Context()
     fe = context.socket(zmq.PULL)
     be = context.socket(zmq.PUSH)
+    logger = logging.getLogger('modeller_server')
 
     try:
         fe.connect(FLAGS.incoming)
