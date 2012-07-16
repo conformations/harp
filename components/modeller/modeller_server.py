@@ -31,6 +31,14 @@ structureX:$templ_pdb:$templ_start:$templ_chain:$templ_stop:$templ_chain:undefin
 $templ_align*
 ''')
 
+
+logging.basicConfig(filename = 'modeller_server.log',
+                    format = '%(asctime)-15s %(message)s',
+                    level = logging.INFO)
+
+logger = logging.getLogger('modeller_server')
+
+
 def process(req, rep):
     '''Processes a single request to the server, storing the result in `rep`'''
     from modeller.automodel.assess import DOPE, GA341
@@ -143,13 +151,6 @@ if __name__ == '__main__':
     except gflags.FlagsError, e:
         print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
         sys.exit(1)
-
-    # Setup logging
-    logging.basicConfig(filename = 'modeller_server.log',
-                        format = '%(asctime)-15s %(message)s',
-                        level = logging.INFO)
-
-    logger = logging.getLogger('modeller_server')
 
     # Setup ZeroMQ
     context = zmq.Context()
