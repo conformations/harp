@@ -35,6 +35,7 @@ def process(req, rep):
     '''Processes a single request to the server, storing the result in `rep`'''
     from modeller.automodel.assess import DOPE, GA341
     from modeller.automodel import automodel
+    logger.info('Processing job=%s, recipient=%s, alignments=%d' % (req.identifier, req.recipient, len(req.alignments)))
 
     # In order to prevent filename collisions, independent runs of modeller
     # are executed in separate directories
@@ -133,6 +134,7 @@ def process(req, rep):
 
     os.chdir(curr_dir)
     shutil.rmtree(work_dir)
+    logger.info('Completed job=%s, recipient=%s' % (req.identifier, req.recipient))
 
 
 if __name__ == '__main__':
